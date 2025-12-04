@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: courses_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: fastapi_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      DB_USER: admin
+      DB_PASSWORD: admin
+      DB_NAME: courses_db
+      DB_HOST: db
+      DB_PORT: 5432
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+
+volumes:
+  pgdata:
