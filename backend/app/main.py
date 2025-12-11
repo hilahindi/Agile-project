@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles 
 from fastapi.middleware.cors import CORSMiddleware # <<< 1. IMPORT
-from .routes import students, courses, ratings, auth
+from .routes import students, courses, ratings, course_reviews, auth
 from .database import Base, engine
 from .seed_data import seed_database
 import os
@@ -34,6 +34,7 @@ app.add_middleware(
 app.include_router(students.router)
 app.include_router(courses.router)
 app.include_router(ratings.router)
+app.include_router(course_reviews.router)
 app.include_router(auth.router)
 
 # Mount the StaticFiles directory to serve the frontend

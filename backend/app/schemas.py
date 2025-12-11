@@ -94,3 +94,34 @@ class RatingResponse(RatingBase):
 
     class Config:
         from_attributes = True
+
+
+# ==================== COURSE REVIEW SCHEMAS ====================
+class CourseReviewBase(BaseModel):
+    """Base schema for Course Review."""
+    student_id: int
+    course_id: int
+    languages_learned: Optional[str] = None
+    course_outputs: Optional[str] = None
+    industry_relevance_text: Optional[str] = None
+    instructor_feedback: Optional[str] = None
+    useful_learning_text: Optional[str] = None
+
+    industry_relevance_rating: int  # 1–5
+    instructor_rating: int          # 1–5
+    useful_learning_rating: int     # 1–5
+
+
+class CourseReviewCreate(CourseReviewBase):
+    """Schema for creating a Course Review."""
+    pass
+
+
+class CourseReviewResponse(CourseReviewBase):
+    """Schema for Course Review response."""
+    id: int
+    final_score: float
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
