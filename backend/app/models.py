@@ -11,7 +11,8 @@ class Student(Base):
     __tablename__ = "students"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String, unique=True, nullable=False) # Changed to unique for login
+    hashed_password = Column(String, nullable=False) # <<< ADDED for Authentication
     faculty = Column(String, nullable=True)
     year = Column(Integer, nullable=True)
     courses_taken = Column(ARRAY(Integer), default=list)

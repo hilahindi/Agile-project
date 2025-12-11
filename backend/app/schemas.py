@@ -1,7 +1,15 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 
+
+# ==================== AUTH SCHEMAS ====================
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
 
 # ==================== STUDENT SCHEMAS ====================
 class StudentBase(BaseModel):
@@ -13,14 +21,19 @@ class StudentBase(BaseModel):
 
 
 class StudentCreate(StudentBase):
-    """Schema for creating a Student."""
+    """Schema for creating a basic Student (without auth password)."""
     pass
+
+class StudentCreateAuth(StudentBase):
+    """Schema for creating a Student with a password for registration."""
+    password: str = Field(min_length=6) # <<< ADDED for Registration
 
 
 class StudentResponse(StudentBase):
     """Schema for Student response."""
     id: int
     created_at: datetime
+    # NOTE: hashed_password is NOT included for security
 
     class Config:
         from_attributes = True

@@ -1,0 +1,66 @@
+# ==================================
+# 1. Project-wide Ignored Directories
+# ==================================
+
+# Python Virtual Environments
+venv/
+.venv/
+
+# Dependency Directories
+**/node_modules/
+# Python build artifacts
+__pycache__/
+*.pyc
+*.pyd
+*.so
+.pytest_cache/
+.mypy_cache/
+
+# IDE and OS Files
+.vscode/  # VS Code configuration folder (optional, remove if shared config is needed)
+.idea/    # JetBrains IDEs (PyCharm, WebStorm)
+.DS_Store # macOS system files
+thumbs.db # Windows thumbnail caches
+
+
+# ==================================
+# 2. Docker and Build Artifacts
+# ==================================
+
+# Docker related files
+# The .env file is used by Docker Compose for sensitive data
+.env
+
+# Docker Compose volume persistence (PostgreSQL data)
+# This directory is defined in your docker-compose.yml
+pgdata/
+
+# Log and database files created by the application
+*.log
+*.sqlite
+/db/*.db
+
+# ==================================
+# 3. Frontend Specific Exclusions
+# ==================================
+
+# React/Create-React-App build output
+# This is the directory FastAPI serves, so we don't track its contents in Git
+/frontend/build
+
+# Node.js standard runtime debug output
+npm-debug.log
+yarn-error.log
+
+# ==================================
+# 4. Backend Specific Exclusions
+# ==================================
+
+# You mentioned excluding all Python files that don't need to be included.
+# This usually means excluding data or migration files that are auto-generated.
+
+# SQLAlchemy/Alembic migrations setup (if you start using it)
+# /backend/alembic/versions/*.py
+
+# If you generated any temporary or local DB files in the backend folder
+/backend/*.sqlite

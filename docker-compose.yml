@@ -26,7 +26,11 @@ services:
     depends_on:
       - db
     volumes:
+      # Mount the backend source code for hot-reload
       - ./backend:/app
+      # CRITICAL: Mount the React build directory for FastAPI to serve
+      - ./frontend/build:/app/app/frontend_build
+      
 
 volumes:
   pgdata:
