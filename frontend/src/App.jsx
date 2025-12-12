@@ -3,7 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import AuthForm from './components/AuthForm';
 import { CourseReviewForm } from './components/CourseReviewForm';
+import ReviewsFeed from './components/RecentReviewsTable';
 import { getToken, removeToken, AuthProvider, useAuth } from './services/authService';
+import { Container } from '@mui/material';
 
 // --- Dashboard for authenticated users ---
 const Dashboard = ({ onLogout }) => {
@@ -63,17 +65,23 @@ const Dashboard = ({ onLogout }) => {
                 </button>
             </nav>
 
-            <div style={{ padding: '20px' }}>
+            <Container maxWidth="lg" sx={{ py: 4 }}>
                 {currentPage === 'dashboard' && (
-                    <div style={{ textAlign: 'center' }}>
-                        <h2>Welcome to the Course Recommendation System!</h2>
-                        <p>You are successfully logged in and can now access personalized recommendations.</p>
+                    <div>
+                        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                            <h2>Welcome to the Course Recommendation System!</h2>
+                            <p>You are successfully logged in and can now access personalized recommendations.</p>
+                        </div>
+                        {/* ReviewsFeed Component - Shows all reviews from all students */}
+                        <ReviewsFeed 
+                            onNavigateToReview={() => setCurrentPage('review')}
+                        />
                     </div>
                 )}
                 {currentPage === 'review' && (
                     <CourseReviewForm />
                 )}
-            </div>
+            </Container>
         </div>
     );
 };

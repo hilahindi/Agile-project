@@ -122,6 +122,11 @@ class CourseReviewResponse(CourseReviewBase):
     student_id: int
     final_score: float
     created_at: datetime
+    student: Optional['StudentResponse'] = None
 
     class Config:
         from_attributes = True
+
+
+# Rebuild models to resolve forward references
+CourseReviewResponse.model_rebuild()

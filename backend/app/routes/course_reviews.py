@@ -29,6 +29,13 @@ def calculate_final_score(industry: int, instructor: int, useful: int) -> float:
 router = APIRouter(prefix="/reviews", tags=["Course Reviews"])
 
 
+@router.get("/", response_model=list[CourseReviewResponse])
+def get_all_reviews(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """Get all course reviews with pagination."""
+    reviews = db.query(CourseReview).offset(skip).limit(limit).all()
+    return reviews
+
+
 @router.post("/", response_model=CourseReviewResponse)
 def create_course_review(
     review_data: CourseReviewCreate,
