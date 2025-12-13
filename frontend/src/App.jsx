@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import AuthForm from './components/AuthForm';
+import ProfileSetup from './components/ProfileSetup';
 import { CourseReviewForm } from './components/CourseReviewForm';
 import ReviewsFeed from './components/RecentReviewsTable';
 import { getToken, removeToken, AuthProvider, useAuth } from './services/authService';
@@ -109,6 +110,20 @@ function AppContent() {
         setCurrentRoute('/dashboard');
     };
 
+    const handleRegisterSuccess = () => {
+        setCurrentRoute('/profile-setup');
+    };
+
+    const handleProfileComplete = (profileData) => {
+        // TODO: Update user profile with API call
+        // For now, just navigate to dashboard
+        setCurrentRoute('/dashboard');
+    };
+
+    const handleProfileBack = () => {
+        setCurrentRoute('/');
+    };
+
     const handleLogout = () => {
         logout();
         setCurrentRoute('/');
@@ -128,6 +143,18 @@ function AppContent() {
         );
     }
 
+    // Route: /profile-setup - Profile setup after registration
+    if (currentRoute === '/profile-setup') {
+        return (
+            <div className="App">
+                <ProfileSetup 
+                    onComplete={handleProfileComplete}
+                    onBack={handleProfileBack}
+                />
+            </div>
+        );
+    }
+
     // Route: / or /dashboard - Login or Dashboard
     return (
         <div className="App">
@@ -135,7 +162,10 @@ function AppContent() {
                 <Dashboard onLogout={handleLogout} />
             ) : (
                 <div>
-                    <AuthForm onAuthSuccess={handleAuthSuccess} />
+                    <AuthForm 
+                        onAuthSuccess={handleAuthSuccess}
+                        onRegisterSuccess={handleRegisterSuccess}
+                    />
                     <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
                         <p>Or <a href="#" onClick={(e) => { e.preventDefault(); setCurrentRoute('/reviews'); }} style={{ color: '#007bff', cursor: 'pointer', textDecoration: 'underline' }}>submit a course review without logging in</a></p>
                     </div>

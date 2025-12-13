@@ -36,31 +36,38 @@ def seed_database():
     sample_courses = [
         models.Course(
             id=10123,
-            name="Web Development Fundamentals",
-            description="Learn HTML, CSS, and JavaScript basics",
+            name="Introduction to Computer Science",
+            description="CS101 - Learn fundamental programming concepts and problem-solving techniques",
             difficulty=2,
-            workload=10
+            workload=4  # credits
         ),
         models.Course(
             id=10124,
-            name="Advanced Python",
-            description="Master Python for backend development",
+            name="Data Structures",
+            description="CS201 - Master arrays, linked lists, trees, and algorithms",
             difficulty=4,
-            workload=12
+            workload=4  # credits
         ),
         models.Course(
             id=10125,
-            name="React for Beginners",
-            description="Build interactive UIs with React",
+            name="Database Systems",
+            description="CS301 - Design and implement relational databases",
             difficulty=3,
-            workload=8
+            workload=3  # credits
         ),
         models.Course(
             id=10126,
-            name="Database Design",
-            description="Design and optimize databases",
-            difficulty=4,
-            workload=10
+            name="Web Development",
+            description="CS302 - Build modern web applications with HTML, CSS, JavaScript",
+            difficulty=3,
+            workload=3  # credits
+        ),
+        models.Course(
+            id=10127,
+            name="Machine Learning",
+            description="CS401 - Introduction to ML algorithms and neural networks",
+            difficulty=5,
+            workload=4  # credits
         ),
     ]
     

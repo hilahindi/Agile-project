@@ -188,7 +188,11 @@ export const register = async ({ name, password, faculty, year }) => {
 
     if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Registration failed. User may exist.');
+        // Create an error object that preserves the detail structure
+        const error = new Error();
+        error.detail = errorData.detail || 'Registration failed. User may exist.';
+        error.response = response;
+        throw error;
     }
 
     return response.json();
