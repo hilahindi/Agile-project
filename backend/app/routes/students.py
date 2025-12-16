@@ -23,9 +23,12 @@ def get_student(student_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=schemas.StudentResponse)
-def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)):
+def create_student(student: schemas.StudentCreateAuth, db: Session = Depends(get_db)):
     """Create a new student."""
-    db_student = models.Student(**student.dict())
+    from ..auth_utils import get_password_hash
+    student_data = student.dict()
+    student_data['hashed_password'] = get_password_hash(student_data.pop('password'))
+    db_student = models.Student(**student_data)
     db.add(db_student)
     db.commit()
     db.refresh(db_student)

@@ -251,3 +251,12 @@ Example feature branches:
 
 ## 📄 License
 Academic use only.
+
+
+
+## run application
+1. backend:
+1.1 run docker desktop
+1.2 docker-compose up -d db --build # leave it running
+1.3 docker-compose up backend --build # no need to restart when doing changes
+1.4 npm run dev # run frontend with listening to changes - no need to restart when doing changes

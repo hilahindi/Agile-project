@@ -1,107 +1,140 @@
 """
-Seed script to populate the database with sample data.
-Run this script to initialize the database with courses, students, and ratings.
+Seed script to initialize the database with tables only (no sample data).
+This ensures a clean schema is ready for production use.
 """
 
 from .database import SessionLocal, engine
 from . import models
 from sqlalchemy import text
+# auth_utils import is still needed for the student model dependency on startup
+from .auth_utils import get_password_hash 
 
 
 def seed_database():
-    """Populate the database with sample data."""
+    """Initialize the database tables without populating sample data."""
     db = SessionLocal()
     
-    # Drop all tables with CASCADE to handle dependencies
+    # --- CRITICAL: Drop all existing tables to apply the new schema ---
     try:
+        # Drop all tables with CASCADE to handle dependencies and ensure the new schema is used
+        db.execute(text("DROP TABLE IF EXISTS course_reviews CASCADE"))
         db.execute(text("DROP TABLE IF EXISTS ratings CASCADE"))
-        db.execute(text("DROP TABLE IF EXISTS enrollment CASCADE"))
-        db.execute(text("DROP TABLE IF EXISTS students CASCADE"))
+        db.execute(text("DROP TABLE IF EXISTS students CASCADE")) 
         db.execute(text("DROP TABLE IF EXISTS courses CASCADE"))
         db.commit()
+        print("Existing tables dropped successfully.")
     except Exception as e:
         db.rollback()
-        print(f"Warning during DROP: {e}")
+        # This will still print a warning if a table didn't exist, but it's safe.
+        print(f"Warning during DROP (may occur if tables didn't exist): {e}") 
     
-    # Create all tables
+    # Create all tables (Now includes 'hashed_password' on the students table)
     models.Base.metadata.create_all(bind=engine)
+    print("Database schema created successfully (tables: students, courses, ratings, course_reviews).")
     
-    db = SessionLocal()
-    
-    # Create sample courses first
-    courses = [
+    # --- ADD SAMPLE COURSES ---
+    sample_courses = [
         models.Course(
-            name="Introduction to Python",
-            description="Learn the basics of Python programming",
+            id=10123,
+            name="Introduction to Computer Science",
+            description="CS101 - Learn fundamental programming concepts and problem-solving techniques",
             difficulty=2,
-            workload=5
+            workload=4  # credits
         ),
         models.Course(
-            name="Data Structures and Algorithms",
-            description="Master essential data structures and algorithmic thinking",
+            id=10124,
+            name="Data Structures",
+            description="CS201 - Master arrays, linked lists, trees, and algorithms",
             difficulty=4,
-            workload=8
+            workload=4  # credits
         ),
         models.Course(
-            name="Web Development with FastAPI",
-            description="Build modern web applications with FastAPI",
+            id=10125,
+            name="Database Systems",
+            description="CS301 - Design and implement relational databases",
             difficulty=3,
-            workload=6
+            workload=3  # credits
         ),
         models.Course(
-            name="Database Design",
-            description="Learn SQL and relational database design principles",
+            id=10126,
+            name="Web Development",
+            description="CS302 - Build modern web applications with HTML, CSS, JavaScript",
             difficulty=3,
-            workload=5
+            workload=3  # credits
         ),
         models.Course(
-            name="Machine Learning Fundamentals",
-            description="Introduction to machine learning concepts and algorithms",
-            difficulty=4,
-            workload=8
-        ),
-        models.Course(
-            name="Cloud Computing with AWS",
-            description="Deploy and manage applications on AWS cloud",
-            difficulty=3,
-            workload=6
+            id=10127,
+            name="Machine Learning",
+            description="CS401 - Introduction to ML algorithms and neural networks",
+            difficulty=5,
+            workload=4  # credits
         ),
     ]
-    db.add_all(courses)
-    db.commit()
     
-    # Create sample students with courses_taken arrays
-    students = [
-        models.Student(name="Alice Johnson", faculty="Computer Science", year=1, courses_taken=[1, 2]),
-        models.Student(name="Bob Smith", faculty="Computer Science", year=2, courses_taken=[1, 3]),
-        models.Student(name="Charlie Brown", faculty="Computer Science", year=3, courses_taken=[2, 4]),
-        models.Student(name="Diana Prince", faculty="Engineering", year=1, courses_taken=[1]),
-        models.Student(name="Eve Wilson", faculty="Engineering", year=2, courses_taken=[5]),
-        models.Student(name="Frank Miller", faculty="Business", year=1, courses_taken=[6]),
+    db.add_all(sample_courses)
+    db.commit()
+    print("Sample courses added successfully.")
+    
+    # --- ADD DEMO STUDENT ---
+    demo_student = models.Student(
+        name="demo",
+        hashed_password=get_password_hash("demo123"),
+        faculty="Computer Science",
+        year=3
+    )
+    db.add(demo_student)
+    db.commit()
+    print("Demo student created successfully (username: demo, password: demo123).")
+    
+    # --- ADD SAMPLE COURSE REVIEWS ---
+    sample_reviews = [
+        models.CourseReview(
+            student_id=1,
+            course_id=10123,
+            languages_learned="HTML, CSS, JavaScript",
+            course_outputs="Personal Portfolio Website, Responsive Design",
+            industry_relevance_text="Highly relevant for web development careers",
+            instructor_feedback="Excellent teaching methodology and clear explanations",
+            useful_learning_text="Learned practical skills applicable to real projects",
+            industry_relevance_rating=5,
+            instructor_rating=5,
+            useful_learning_rating=5,
+            final_score=10.0
+        ),
+        models.CourseReview(
+            student_id=1,
+            course_id=10124,
+            languages_learned="Python, Advanced OOP",
+            course_outputs="Multiple backend projects, API development",
+            industry_relevance_text="Essential for backend development positions",
+            instructor_feedback="Great depth of knowledge, challenging assignments",
+            useful_learning_text="Very useful for production-level coding",
+            industry_relevance_rating=5,
+            instructor_rating=4,
+            useful_learning_rating=5,
+            final_score=9.4
+        ),
+        models.CourseReview(
+            student_id=1,
+            course_id=10125,
+            languages_learned="React, JavaScript ES6+",
+            course_outputs="Interactive React Components, Full App",
+            industry_relevance_text="Very relevant for modern frontend development",
+            instructor_feedback="Good course content, could use more examples",
+            useful_learning_text="Practical knowledge for frontend jobs",
+            industry_relevance_rating=5,
+            instructor_rating=4,
+            useful_learning_rating=4,
+            final_score=8.8
+        ),
     ]
-    db.add_all(students)
-    db.commit()
     
-    # Create sample ratings
-    ratings = [
-        models.Rating(student_id=1, course_id=1, score=5.0, comment="Excellent course!"),
-        models.Rating(student_id=1, course_id=2, score=4.5, comment="Challenging but rewarding"),
-        models.Rating(student_id=2, course_id=1, score=4.0, comment="Good introduction"),
-        models.Rating(student_id=2, course_id=3, score=4.8, comment="Very practical and useful"),
-        models.Rating(student_id=3, course_id=2, score=4.2, comment="Comprehensive content"),
-        models.Rating(student_id=3, course_id=4, score=4.5, comment="Clear explanations"),
-        models.Rating(student_id=4, course_id=1, score=3.8, comment="Could use more examples"),
-        models.Rating(student_id=5, course_id=5, score=4.7, comment="Great instructor"),
-        models.Rating(student_id=6, course_id=6, score=4.3, comment="Hands-on and practical"),
-    ]
-    db.add_all(ratings)
+    db.add_all(sample_reviews)
     db.commit()
+    print("Sample course reviews added successfully.")
     
-    print("Database seeded successfully!")
     db.close()
 
 
 if __name__ == "__main__":
     seed_database()
-
-

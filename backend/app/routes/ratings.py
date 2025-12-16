@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
+from ..auth_utils import get_current_student
 
 router = APIRouter(prefix="/ratings", tags=["ratings"])
 
@@ -37,9 +38,26 @@ def get_student_ratings(student_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=schemas.RatingResponse)
-def create_rating(rating: schemas.RatingCreate, db: Session = Depends(get_db)):
-    """Create a new rating."""
-    db_rating = models.Rating(**rating.dict())
+def create_rating(
+    rating: schemas.RatingCreate, 
+    current_student: models.Student = Depends(get_current_student),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new rating. Student ID is automatically set from the authenticated user.
+    """
+    # Verify course exists
+    course = db.query(models.Course).filter(models.Course.id == rating.course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    # Create rating with student_id from authentication context
+    db_rating = models.Rating(
+        student_id=current_student.id,
+        course_id=rating.course_id,
+        score=rating.score,
+        comment=rating.comment,
+    )
     db.add(db_rating)
     db.commit()
     db.refresh(db_rating)

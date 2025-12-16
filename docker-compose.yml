@@ -10,6 +10,11 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build: ./backend
@@ -24,9 +29,14 @@ services:
       DB_HOST: db
       DB_PORT: 5432
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
+      # Mount the backend source code for hot-reload
       - ./backend:/app
+      # CRITICAL: Mount the React build directory for FastAPI to serve
+      - ./frontend/build:/app/app/frontend_build
+      
 
 volumes:
   pgdata:
