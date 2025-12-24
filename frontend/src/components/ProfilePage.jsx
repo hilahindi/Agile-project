@@ -24,20 +24,14 @@ const ProfilePage = () => {
     const [showGoalsSelector, setShowGoalsSelector] = useState(false);
     const [courses, setCourses] = useState([]);
 
-    // Manage global scroll behavior
     useEffect(() => {
         const body = document.body;
         const html = document.documentElement;
-
-        if (!editMode) {
-            // Only hide overflow if content is small enough to fit.
-            // This prevents a horizontal scroller while allowing vertical if needed.
-            body.style.overflowX = 'hidden';
-            html.style.overflowX = 'hidden';
-        } else {
-            // Always allow scroll in edit mode as grids are large
+        body.style.overflowX = 'hidden';
+        html.style.overflowX = 'hidden';
+        
+        if (editMode) {
             body.style.overflowY = 'auto';
-            body.style.overflowX = 'hidden';
         }
 
         return () => {
@@ -52,7 +46,6 @@ const ProfilePage = () => {
             try {
                 if (!token || !currentUser) throw new Error('Not authenticated');
                 const res = await fetch(`${API_URL}/students/${currentUser.id}`);
-                if (!res.ok) throw new Error('Failed to fetch profile');
                 const data = await res.json();
                 setProfile(data);
                 setFormData({
@@ -73,16 +66,13 @@ const ProfilePage = () => {
                 const response = await fetch(`${API_URL}/courses/`);
                 const data = await response.json();
                 setCourses(data);
-            } catch (e) {
-                console.error('Failed to load courses');
-            }
+            } catch (e) { console.error(e); }
         }
         fetchProfile();
         fetchCourses();
         fetch(`${API_URL}/students/?skip=0&limit=100`)
             .then(res => res.json())
-            .then(data => setAllStudents(data))
-            .catch(() => {});
+            .then(data => setAllStudents(data));
     }, [currentUser, token]);
 
     function handleChange(e) {
@@ -90,7 +80,7 @@ const ProfilePage = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
         if (name === 'name' && allStudents) {
             const exists = allStudents.some(s => s.name?.toLowerCase() === value.toLowerCase() && s.id !== currentUser.id);
-            setNameError(exists ? 'This name is already taken.' : null);
+            setNameError(exists ? 'Name already taken.' : null);
         }
     }
 
@@ -100,20 +90,23 @@ const ProfilePage = () => {
         const newCourses = isSelected 
             ? currentTaken.filter(id => id !== courseId)
             : [...currentTaken, courseId];
+        // Grid strictly updates data; visibility state (showCourseSelector) is NOT touched
         setFormData(prev => ({ ...prev, courses_taken: newCourses }));
     };
 
     const handleToggleGoal = (goalId) => {
-        const newGoals = selectedGoals.includes(goalId)
-            ? selectedGoals.filter(id => id !== goalId)
-            : [...selectedGoals, goalId];
+        const currentGoals = formData.career_goals || [];
+        const isSelected = currentGoals.includes(goalId);
+        const newGoals = isSelected
+            ? currentGoals.filter(id => id !== goalId)
+            : [...currentGoals, goalId];
+        
         setSelectedGoals(newGoals);
         setFormData(prev => ({ ...prev, career_goals: newGoals }));
     };
 
     async function handleSave(e) {
         e.preventDefault();
-        if (nameError) return;
         setLoading(true);
         setSuccess(false);
         try {
@@ -125,20 +118,15 @@ const ProfilePage = () => {
                 },
                 body: JSON.stringify(formData),
             });
-            if (!res.ok) throw new Error('Update failed');
             const updated = await res.json();
             setProfile(updated);
             setEditMode(false);
             setSuccess(true);
-        } catch(e) {
-            setError(e.message);
-        } finally {
-            setLoading(false);
-        }
+        } catch(e) { setError(e.message); }
+        finally { setLoading(false); }
     }
 
-    if (loading) return <div className="loading-state">Loading profile...</div>;
-    if (error) return <div className="error-state">{error}</div>;
+    if (loading) return <div className="loading-state">Loading...</div>;
 
     const goalIdToName = (id) => {
         const MAP = {
@@ -164,7 +152,7 @@ const ProfilePage = () => {
                         <button className="done-btn" onClick={() => { 
                             setEditMode(false); 
                             setFormData(profile); 
-                            setSelectedGoals(profile.career_goals || []); 
+                            setSelectedGoals(profile.career_goals || []);
                             setShowCourseSelector(false);
                             setShowGoalsSelector(false);
                         }}>Cancel</button>
@@ -172,8 +160,9 @@ const ProfilePage = () => {
                 </div>
 
                 <form onSubmit={handleSave} className="profile-form">
-                    <label className="profile-label">
-                        Name:
+                    {/* Basic Info using Labels */}
+                    <label className="profile-section">
+                        <span className="section-title">Name:</span>
                         {editMode ? (
                             <input type="text" name="name" value={formData.name} className="profile-input" onChange={handleChange} autoFocus />
                         ) : (
@@ -182,8 +171,8 @@ const ProfilePage = () => {
                         {editMode && nameError && <span className="field-error">{nameError}</span>}
                     </label>
 
-                    <label className="profile-label">
-                        Department/Faculty:
+                    <label className="profile-section">
+                        <span className="section-title">Department:</span>
                         {editMode ? (
                             <select name="faculty" value={formData.faculty} className="profile-input" onChange={handleChange}>
                                 {DEPARTMENTS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
@@ -193,8 +182,8 @@ const ProfilePage = () => {
                         )}
                     </label>
 
-                    <label className="profile-label">
-                        Year:
+                    <label className="profile-section">
+                        <span className="section-title">Year:</span>
                         {editMode ? (
                             <select name="year" value={formData.year} className="profile-input" onChange={handleChange}>
                                 {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
@@ -204,57 +193,54 @@ const ProfilePage = () => {
                         )}
                     </label>
 
-                    <label className="profile-label">
-                        Courses Taken:
-                        <div>
-                            {editMode && (
-                                <button type="button" className="inline-edit-btn" onClick={() => setShowCourseSelector(!showCourseSelector)}>
-                                    {showCourseSelector ? 'Done Selecting' : 'Edit Courses'}
-                                </button>
-                            )}
-                            {editMode && showCourseSelector ? (
-                                <div className="selector-wrapper">
-                                    <CoursesGrid
-                                        filteredCourses={courses}
-                                        selectedCourses={formData.courses_taken || []}
-                                        handleToggleCourse={handleToggleCourse}
-                                        getCourseCode={(desc) => desc?.match(/^([A-Z]+\d+)/)?.[1] || ''}
-                                    />
-                                </div>
-                            ) : (
-                                <div className="tag-list">
-                                    {(editMode ? formData.courses_taken : profile.courses_taken || []).map(courseId => {
-                                        const c = courses.find(item => item.id === courseId) || profile.course_catalog?.find(item => item.id === courseId);
-                                        return <span className="profile-tag" key={courseId}>{c?.name || courseId}</span>;
-                                    })}
-                                    {(editMode ? formData.courses_taken : profile.courses_taken || []).length === 0 && <span className="profile-hint">No courses selected.</span>}
-                                </div>
-                            )}
-                        </div>
-                    </label>
+                    {/* Complex Sections using DIVS to prevent Event Bubbling */}
+                    <div className="profile-section">
+                        <span className="section-title">Courses Taken:</span>
+                        {editMode && (
+                            <button type="button" className="inline-edit-btn" onClick={() => setShowCourseSelector(!showCourseSelector)}>
+                                {showCourseSelector ? 'Done Selecting' : 'Edit Courses'}
+                            </button>
+                        )}
+                        {editMode && showCourseSelector ? (
+                            <div className="selector-wrapper">
+                                <CoursesGrid
+                                    filteredCourses={courses}
+                                    selectedCourses={formData.courses_taken || []}
+                                    handleToggleCourse={handleToggleCourse}
+                                    getCourseCode={(desc) => desc?.match(/^([A-Z]+\d+)/)?.[1] || ''}
+                                />
+                            </div>
+                        ) : (
+                            <div className="tag-list">
+                                {(editMode ? formData.courses_taken : profile.courses_taken || []).map(courseId => {
+                                    const c = courses.find(item => item.id === courseId) || profile.course_catalog?.find(item => item.id === courseId);
+                                    return <span className="profile-tag" key={courseId}>{c?.name || courseId}</span>;
+                                })}
+                                {(editMode ? formData.courses_taken : profile.courses_taken || []).length === 0 && <span className="profile-hint">No courses.</span>}
+                            </div>
+                        )}
+                    </div>
 
-                    <label className="profile-label">
-                        Career Goals:
-                        <div>
-                            {editMode && (
-                                <button type="button" className="inline-edit-btn" onClick={() => setShowGoalsSelector(!showGoalsSelector)}>
-                                    {showGoalsSelector ? 'Done Selecting' : 'Edit Goals'}
-                                </button>
-                            )}
-                            {editMode && showGoalsSelector ? (
-                                <div className="selector-wrapper">
-                                    <JobRolesGrid jobRoles={JobRoles} selectedGoals={selectedGoals} handleToggleGoal={handleToggleGoal} />
-                                </div>
-                            ) : (
-                                <div className="tag-list">
-                                    {(editMode ? formData.career_goals : profile.career_goals || []).map(id => (
-                                        <span className="profile-tag" key={id}>{goalIdToName(id)}</span>
-                                    ))}
-                                    {(editMode ? formData.career_goals : profile.career_goals || []).length === 0 && <span className="profile-hint">No goals set.</span>}
-                                </div>
-                            )}
-                        </div>
-                    </label>
+                    <div className="profile-section">
+                        <span className="section-title">Career Goals:</span>
+                        {editMode && (
+                            <button type="button" className="inline-edit-btn" onClick={() => setShowGoalsSelector(!showGoalsSelector)}>
+                                {showGoalsSelector ? 'Done Selecting' : 'Edit Goals'}
+                            </button>
+                        )}
+                        {editMode && showGoalsSelector ? (
+                            <div className="selector-wrapper">
+                                <JobRolesGrid jobRoles={JobRoles} selectedGoals={selectedGoals} handleToggleGoal={handleToggleGoal} />
+                            </div>
+                        ) : (
+                            <div className="tag-list">
+                                {(editMode ? formData.career_goals : profile.career_goals || []).map(id => (
+                                    <span className="profile-tag" key={id}>{goalIdToName(id)}</span>
+                                ))}
+                                {(editMode ? formData.career_goals : profile.career_goals || []).length === 0 && <span className="profile-hint">No goals.</span>}
+                            </div>
+                        )}
+                    </div>
 
                     {editMode && (
                         <div className="button-row-center">
