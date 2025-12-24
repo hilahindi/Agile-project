@@ -33,8 +33,7 @@ const Navbar = ({ currentPage, onNavigate, onLogout }) => {
   const handleMenuItemClick = (action) => {
     handleMenuClose();
     if (action === 'profile') {
-      // TODO: Navigate to profile page when route exists
-      console.log('Navigate to profile');
+      onNavigate('profile');
     } else if (action === 'reviews') {
       // TODO: Navigate to reviews page when route exists
       console.log('Navigate to reviews');

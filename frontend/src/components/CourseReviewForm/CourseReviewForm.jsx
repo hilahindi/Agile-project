@@ -260,11 +260,15 @@ const CourseReviewForm = () => {
           elevation={6}
           sx={{
             width: '100%',
-            maxWidth: 900,
-            borderRadius: '12px',
+            maxWidth: 560,
+            borderRadius: '10px',
             backgroundColor: '#ffffff',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
             overflow: 'hidden',
+            margin: '0 auto',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
           }}
         >
           {/* Header Section */}
@@ -302,7 +306,7 @@ const CourseReviewForm = () => {
           </Box>
 
           {/* Content Wrapper */}
-          <Box sx={{ px: 4, pb: 4, width: '90%' }}>
+          <Box sx={{ px: 4, pb: 4, width: '90%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             {/* Messages */}
             {successMessage && (
               <Alert severity="success" sx={{ mb: 3, borderRadius: '8px', fontSize: '14px' }}>
@@ -728,8 +732,8 @@ const CourseReviewForm = () => {
                     padding: '12px 24px',
                     transition: 'all 0.2s',
                     '&:hover': {
-                      backgroundColor: '#6d28d9',
-                      boxShadow: '0 4px 12px rgba(0, 217, 163, 0.3)',
+                      backgroundColor: '#00b386',
+                      boxShadow: '0 4px 12px rgba(0, 217, 163, 0.13)',
                     },
                     '&:disabled': {
                       backgroundColor: '#9ca3af',

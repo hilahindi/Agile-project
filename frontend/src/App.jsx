@@ -52,6 +52,7 @@ const Dashboard = ({ onLogout, currentPage, onNavigate }) => {
                         </Box>
                     )}
                     {currentPage === 'review' && <CourseReviewForm />}
+                    {currentPage === 'profile' && <ProfilePage />}
                 </Box>
             </Box>
         </Box>
