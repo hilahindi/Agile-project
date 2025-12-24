@@ -238,6 +238,17 @@ const ReviewsFeed = ({ onNavigateToReview }) => {
                   Course ID
                 </TableCell>
                 <TableCell
+                  align="left"
+                  sx={{
+                    fontWeight: 700,
+                    backgroundColor: '#f0f0f0',
+                    borderBottom: '2px solid #ddd',
+                    width: '15%',
+                  }}
+                >
+                  Course Name
+                </TableCell>
+                <TableCell
                   align="center"
                   sx={{
                     fontWeight: 700,
@@ -340,6 +351,13 @@ const ReviewsFeed = ({ onNavigateToReview }) => {
                   <TableCell align="left" sx={{ py: 1.5 }}>
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
                       {review.course_id}
+                    </Typography>
+                  </TableCell>
+
+                  {/* Course Name */}
+                  <TableCell align="left" sx={{ py: 1.5 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {review.course?.name || 'Unknown Course'}
                     </Typography>
                   </TableCell>
 
