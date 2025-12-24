@@ -117,6 +117,18 @@ class CourseReviewCreate(CourseReviewBase):
     pass
 
 
+class CourseResponse(BaseModel):
+    """Schema for Course in responses."""
+    id: int
+    name: str
+    description: Optional[str] = None
+    difficulty: Optional[int] = None
+    workload: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
 class CourseReviewResponse(CourseReviewBase):
     """Schema for Course Review response."""
     id: int
@@ -124,6 +136,7 @@ class CourseReviewResponse(CourseReviewBase):
     final_score: float
     created_at: datetime
     student: Optional['StudentResponse'] = None
+    course: Optional['CourseResponse'] = None
 
     class Config:
         from_attributes = True

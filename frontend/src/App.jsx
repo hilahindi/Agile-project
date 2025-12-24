@@ -7,7 +7,7 @@ import { CourseReviewForm } from './components/CourseReviewForm';
 import ReviewsFeed from './components/RecentReviewsTable';
 import Navbar from './components/Navbar';
 import { getToken, removeToken, AuthProvider, useAuth } from './services/authService';
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 
 // --- Dashboard for authenticated users ---
 const Dashboard = ({ onLogout, currentPage, onNavigate }) => {
@@ -23,13 +23,27 @@ const Dashboard = ({ onLogout, currentPage, onNavigate }) => {
                 <Box sx={{ maxWidth: '1200px', margin: '0 auto' }}>
                     {currentPage === 'dashboard' && (
                         <Box>
-                            <Box sx={{ textAlign: 'center', mb: 5 }}>
-                                <h1 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '8px', color: '#333' }}>
+                            <Box sx={{ textAlign: 'center', mb: 5, mt: 4 }}>
+                                <Typography
+                                  variant="h6"
+                                  sx={{
+                                    fontWeight: 600,
+                                    fontSize: '28px',
+                                    marginBottom: '8px',
+                                    color: '#333',
+                                  }}
+                                >
                                     Welcome to Afeka Advisor
-                                </h1>
-                                <p style={{ fontSize: '16px', color: '#666' }}>
+                                </Typography>
+                                <Typography
+                                  variant="body1"
+                                  sx={{
+                                    fontSize: '16px',
+                                    color: '#666',
+                                  }}
+                                >
                                     Your personalized course recommendations
-                                </p>
+                                </Typography>
                             </Box>
                             <ReviewsFeed 
                                 onNavigateToReview={() => onNavigate('review')}
