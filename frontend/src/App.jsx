@@ -5,66 +5,45 @@ import AuthForm from './components/AuthForm';
 import ProfileSetup from './components/ProfileSetup';
 import { CourseReviewForm } from './components/CourseReviewForm';
 import ReviewsFeed from './components/RecentReviewsTable';
+import Navbar from './components/Navbar';
 import { getToken, removeToken, AuthProvider, useAuth } from './services/authService';
+import { Box } from '@mui/material';
 
 // --- Dashboard for authenticated users ---
-const Dashboard = ({ onLogout }) => {
-    const [currentPage, setCurrentPage] = React.useState('dashboard');
-
+const Dashboard = ({ onLogout, currentPage, onNavigate }) => {
     return (
-        <div style={dashboardStyles.container}>
-            <nav style={dashboardStyles.nav}>
-                <div style={dashboardStyles.navButtons}>
-                    <button 
-                        onClick={() => setCurrentPage('dashboard')}
-                        style={{
-                            ...dashboardStyles.navButton,
-                            ...(currentPage === 'dashboard' ? dashboardStyles.navButtonActive : {})
-                        }}
-                    >
-                        Dashboard
-                    </button>
-                    <button 
-                        onClick={() => setCurrentPage('review')}
-                        style={{
-                            ...dashboardStyles.navButton,
-                            ...(currentPage === 'review' ? dashboardStyles.navButtonActive : {})
-                        }}
-                    >
-                        Submit Review
-                    </button>
-                </div>
-                <button 
-                    onClick={onLogout}
-                    style={dashboardStyles.logoutButton}
-                >
-                    Log Out
-                </button>
-            </nav>
+        <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+            <Navbar 
+                currentPage={currentPage} 
+                onNavigate={onNavigate}
+                onLogout={onLogout}
+            />
 
-            <div style={dashboardStyles.content}>
-                {currentPage === 'dashboard' && (
-                    <div style={dashboardStyles.dashboardContent}>
-                        <div style={dashboardStyles.welcomeSection}>
-                            <h1 style={dashboardStyles.welcomeTitle}>Welcome to Afeka Advisor</h1>
-                            <p style={dashboardStyles.welcomeSubtitle}>Your personalized course recommendations</p>
-                        </div>
-                        {/* ReviewsFeed Component - Shows all reviews from all students */}
-                        <ReviewsFeed 
-                            onNavigateToReview={() => setCurrentPage('review')}
-                        />
-                    </div>
-                )}
-                {currentPage === 'review' && (
-                    <div style={dashboardStyles.reviewContent}>
-                        <CourseReviewForm />
-                    </div>
-                )}
-            </div>
-        </div>
+            <Box sx={{ pt: 10, pb: 5, px: 2 }}>
+                <Box sx={{ maxWidth: '1200px', margin: '0 auto' }}>
+                    {currentPage === 'dashboard' && (
+                        <Box>
+                            <Box sx={{ textAlign: 'center', mb: 5 }}>
+                                <h1 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '8px', color: '#333' }}>
+                                    Welcome to Afeka Advisor
+                                </h1>
+                                <p style={{ fontSize: '16px', color: '#666' }}>
+                                    Your personalized course recommendations
+                                </p>
+                            </Box>
+                            <ReviewsFeed 
+                                onNavigateToReview={() => onNavigate('review')}
+                            />
+                        </Box>
+                    )}
+                    {currentPage === 'review' && <CourseReviewForm />}
+                </Box>
+            </Box>
+        </Box>
     );
 };
 
+// Old styles (kept for reference, no longer used in new layout)
 const dashboardStyles = {
     container: {
         minHeight: '100vh',
@@ -192,6 +171,7 @@ const loginPageStyles = {
 // --- Main App Component ---
 function AppContent() {
     const [currentRoute, setCurrentRoute] = useState('/');
+    const [currentPage, setCurrentPage] = useState('dashboard');
     const { currentUser, logout, loading } = useAuth();
     const isAuthenticated = !!currentUser;
 
@@ -216,6 +196,11 @@ function AppContent() {
     const handleLogout = () => {
         logout();
         setCurrentRoute('/');
+        setCurrentPage('dashboard');
+    };
+
+    const handleNavigate = (page) => {
+        setCurrentPage(page);
     };
 
     // Don't render while auth is loading
@@ -254,7 +239,11 @@ function AppContent() {
     return (
         <>
             {isAuthenticated ? (
-                <Dashboard onLogout={handleLogout} />
+                <Dashboard 
+                    onLogout={handleLogout}
+                    currentPage={currentPage}
+                    onNavigate={handleNavigate}
+                />
             ) : (
                 <div style={loginPageStyles.container}>
                     <AuthForm 
