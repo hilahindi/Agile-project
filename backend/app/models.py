@@ -32,12 +32,34 @@ class Course(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False)
     description = Column(String, nullable=True)
-    difficulty = Column(Integer, nullable=True)   # 1–5
     workload = Column(Integer, nullable=True)     # hours per week
+    credits = Column(Float, nullable=True)        # credit hours
+    status = Column(String, nullable=True)        # Mandatory, Selective, Service
     created_at = Column(DateTime, default=datetime.utcnow)
 
     ratings = relationship("Rating", back_populates="course", cascade="all, delete-orphan")
     course_reviews = relationship("CourseReview", back_populates="course", cascade="all, delete-orphan")
+    prerequisites = relationship(
+        "CoursePrerequisite",
+        foreign_keys="CoursePrerequisite.course_id",
+        back_populates="course",
+        cascade="all, delete-orphan"
+    )
+
+
+# --------------------
+# Course Prerequisites Table (Junction Table)
+# --------------------
+class CoursePrerequisite(Base):
+    __tablename__ = "course_prerequisites"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    required_course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    course = relationship("Course", foreign_keys=[course_id], back_populates="prerequisites")
+    required_course = relationship("Course", foreign_keys=[required_course_id])
 
 
 # --------------------

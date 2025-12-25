@@ -45,8 +45,9 @@ class CourseBase(BaseModel):
     """Base schema for Course."""
     name: str
     description: Optional[str] = None
-    difficulty: Optional[int] = None
     workload: Optional[int] = None
+    credits: Optional[float] = None
+    status: Optional[str] = None
 
 
 class CourseCreate(CourseBase):
