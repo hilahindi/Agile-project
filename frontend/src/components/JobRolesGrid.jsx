@@ -7,7 +7,7 @@ const defaultGridStyle = {
     marginBottom: '32px',
 };
 
-const JobRolesGrid = ({ jobRoles, selectedGoals = [], handleToggleGoal, styles = {} }) => (
+const JobRolesGrid = ({ jobRoles, selectedGoals = [], handleToggleGoal, styles = {}, singleSelect = false }) => (
     <div style={styles.jobRolesGrid || defaultGridStyle}>
         {jobRoles.map((role) => {
             const isSelected = selectedGoals.includes(role.id);
@@ -37,7 +37,11 @@ const JobRolesGrid = ({ jobRoles, selectedGoals = [], handleToggleGoal, styles =
                         onChange={e => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleToggleGoal(role.id);
+                            if (singleSelect) {
+                                handleToggleGoal(role.id, true);
+                            } else {
+                                handleToggleGoal(role.id);
+                            }
                         }}
                         style={styles.checkbox || { width: 20, height: 20, cursor: 'pointer', flexShrink: 0 }}
                     />

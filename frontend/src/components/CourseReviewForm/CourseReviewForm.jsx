@@ -302,7 +302,7 @@ const CourseReviewForm = () => {
           </Box>
 
           {/* Content Wrapper */}
-          <Box sx={{ px: 4, pb: 4, width: '90%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Box sx={{ px: 4, pb: 4, minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             {/* Messages */}
             {successMessage && (
               <Alert severity="success" sx={{ mb: 3, borderRadius: '8px', fontSize: '14px' }}>

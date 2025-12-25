@@ -35,8 +35,7 @@ const Navbar = ({ currentPage, onNavigate, onLogout }) => {
     if (action === 'profile') {
       onNavigate('profile');
     } else if (action === 'reviews') {
-      // TODO: Navigate to reviews page when route exists
-      console.log('Navigate to reviews');
+      onNavigate('my-reviews');
     } else if (action === 'logout') {
       onLogout();
     }

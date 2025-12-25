@@ -6,6 +6,7 @@ import ProfileSetup from './components/ProfileSetup';
 import ProfilePage from './components/ProfilePage';
 import { CourseReviewForm } from './components/CourseReviewForm';
 import ReviewsFeed from './components/RecentReviewsTable';
+import MyReviews from './components/MyReviews';
 import Navbar from './components/Navbar';
 import { getToken, removeToken, AuthProvider, useAuth } from './services/authService';
 import { Box, Typography } from '@mui/material';
@@ -53,6 +54,7 @@ const Dashboard = ({ onLogout, currentPage, onNavigate }) => {
                     )}
                     {currentPage === 'review' && <CourseReviewForm />}
                     {currentPage === 'profile' && <ProfilePage />}
+{currentPage === 'my-reviews' && <MyReviews />}
                 </Box>
             </Box>
         </Box>
@@ -186,6 +188,11 @@ const loginPageStyles = {
 
 // --- Main App Component ---
 function AppContent() {
+    useEffect(() => {
+        const handler = () => setCurrentPage('review');
+        window.addEventListener('navigateToReview', handler);
+        return () => window.removeEventListener('navigateToReview', handler);
+    }, []);
     const [currentRoute, setCurrentRoute] = useState('/');
     const [currentPage, setCurrentPage] = useState('dashboard');
     const { currentUser, logout, loading } = useAuth();

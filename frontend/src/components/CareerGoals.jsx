@@ -7,18 +7,22 @@ import { JobRoles } from '../utils';
 const CareerGoals = ({ selectedGoals, onGoalsChange, onNext, onBack }) => {
     const [errors, setErrors] = useState({});
 
-    const handleToggleGoal = (goalId) => {
-        const isSelected = selectedGoals.includes(goalId);
-        if (isSelected) {
-            onGoalsChange(selectedGoals.filter(id => id !== goalId));
+    const handleToggleGoal = (goalId, singleSelect = false) => {
+        if (singleSelect) {
+            onGoalsChange([goalId]);
         } else {
-            onGoalsChange([...selectedGoals, goalId]);
+            const isSelected = selectedGoals.includes(goalId);
+            if (isSelected) {
+                onGoalsChange(selectedGoals.filter(id => id !== goalId));
+            } else {
+                onGoalsChange([...selectedGoals, goalId]);
+            }
         }
-        // Clear error when user selects something
         if (errors.goals) {
             setErrors({ ...errors, goals: null });
         }
     };
+
 
     const handleNext = () => {
         if (selectedGoals.length === 0) {
@@ -71,8 +75,9 @@ const CareerGoals = ({ selectedGoals, onGoalsChange, onNext, onBack }) => {
                 <JobRolesGrid
                     jobRoles={JobRoles}
                     selectedGoals={selectedGoals}
-                    handleToggleGoal={handleToggleGoal}
+                    handleToggleGoal={(goalId) => handleToggleGoal(goalId, true)}
                     styles={styles}
+                    singleSelect={true}
                 />
 
                 {errors.goals && (

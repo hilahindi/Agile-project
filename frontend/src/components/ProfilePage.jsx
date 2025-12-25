@@ -238,7 +238,11 @@ const ProfilePage = () => {
                         )}
 {editMode && showGoalsSelector ? (
     <div className="selector-wrapper">
-        <JobRolesGrid jobRoles={JobRoles} selectedGoals={selectedGoals} handleToggleGoal={handleToggleGoal} />
+        <JobRolesGrid jobRoles={JobRoles} selectedGoals={selectedGoals} handleToggleGoal={(goalId) => {
+    setSelectedGoals([goalId]);
+    setFormData(prev => ({ ...prev, career_goals: [goalId] }));
+    setCareerGoalsError('');
+}} singleSelect={true} />
         {careerGoalsError && <div style={{ color: '#dc3545', fontSize: 15, marginTop: 10 }}>{careerGoalsError}</div>}
     </div>
 ) : (
