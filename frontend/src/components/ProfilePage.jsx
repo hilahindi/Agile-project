@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Snackbar, Alert } from '@mui/material';
 import { useAuth } from '../services/authService';
 import CoursesGrid from './CoursesGrid';
 import JobRolesGrid from './JobRolesGrid';
@@ -22,6 +23,7 @@ const ProfilePage = () => {
     const [showCourseSelector, setShowCourseSelector] = useState(false);
     const [showGoalsSelector, setShowGoalsSelector] = useState(false);
     const [courses, setCourses] = useState([]);
+    const [toastOpen, setToastOpen] = useState(false);
 
     useEffect(() => {
         const body = document.body;
@@ -104,10 +106,14 @@ const ProfilePage = () => {
         setFormData(prev => ({ ...prev, career_goals: newGoals }));
     };
 
+    const handleToastClose = (event, reason) => {
+        if (reason === 'clickaway') return;
+        setToastOpen(false);
+    };
+
     async function handleSave(e) {
         e.preventDefault();
         setLoading(true);
-        setSuccess(false);
         try {
             const res = await fetch(`${API_URL}/students/${currentUser.id}`, {
                 method: 'PUT',
@@ -120,9 +126,14 @@ const ProfilePage = () => {
             const updated = await res.json();
             setProfile(updated);
             setEditMode(false);
-            setSuccess(true);
-        } catch(e) { setError(e.message); }
-        finally { setLoading(false); }
+            
+            // Trigger the toast notification instead of setting a success boolean
+            setToastOpen(true); 
+        } catch(e) { 
+            setError(e.message); 
+        } finally { 
+            setLoading(false); 
+        }
     }
 
     if (loading) return <div className="loading-state">Loading...</div>;
@@ -246,9 +257,24 @@ const ProfilePage = () => {
                             <button type="submit" className="apply-btn" disabled={loading}>Apply Changes</button>
                         </div>
                     )}
-                    {success && <div className="success-msg">Profile updated successfully!</div>}
                 </form>
             </div>
+
+            <Snackbar 
+                open={toastOpen} 
+                autoHideDuration={4000} 
+                onClose={handleToastClose}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert 
+                    onClose={handleToastClose} 
+                    severity="success" 
+                    variant="filled"
+                    sx={{ width: '100%', backgroundColor: '#00D9A3' }}
+                >
+                    Profile updated successfully!
+                </Alert>
+            </Snackbar>
         </div>
     );
 };
