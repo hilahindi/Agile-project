@@ -1,26 +1,11 @@
 // frontend/src/components/CareerGoals.jsx
 
 import React, { useState } from 'react';
+import JobRolesGrid from './JobRolesGrid';
+import { JobRoles } from '../utils';
 
 const CareerGoals = ({ selectedGoals, onGoalsChange, onNext, onBack }) => {
     const [errors, setErrors] = useState({});
-
-    const jobRoles = [
-        { id: 'backend', title: 'Backend Developer', category: 'Software Development' },
-        { id: 'frontend', title: 'Frontend Developer', category: 'Software Development' },
-        { id: 'fullstack', title: 'Full Stack Developer', category: 'Software Development' },
-        { id: 'mobile', title: 'Mobile Developer', category: 'Software Development' },
-        { id: 'datascientist', title: 'Data Scientist', category: 'Data Science' },
-        { id: 'dataanalyst', title: 'Data Analyst', category: 'Data Science' },
-        { id: 'mlengineer', title: 'Machine Learning Engineer', category: 'Data Science' },
-        { id: 'devops', title: 'DevOps Engineer', category: 'DevOps' },
-        { id: 'cloudarchitect', title: 'Cloud Architect', category: 'DevOps' },
-        { id: 'uxdesigner', title: 'UX Designer', category: 'Design' },
-        { id: 'qaengineer', title: 'QA Engineer', category: 'QA' },
-        { id: 'securityengineer', title: 'Security Engineer', category: 'Software Development' },
-        { id: 'productmanager', title: 'Product Manager', category: 'Management' },
-        { id: 'embeddedsystems', title: 'Embedded Systems Engineer', category: 'Hardware' },
-    ];
 
     const handleToggleGoal = (goalId) => {
         const isSelected = selectedGoals.includes(goalId);
@@ -83,33 +68,12 @@ const CareerGoals = ({ selectedGoals, onGoalsChange, onNext, onBack }) => {
                 </p>
 
                 {/* Job Roles Grid */}
-                <div style={styles.jobRolesGrid}>
-                    {jobRoles.map((role) => {
-                        const isSelected = selectedGoals.includes(role.id);
-                        return (
-                            <div
-                                key={role.id}
-                                style={{
-                                    ...styles.jobRoleItem,
-                                    backgroundColor: isSelected ? '#f3e8ff' : '#f5f5f5',
-                                    borderColor: isSelected ? '#00D9A3' : '#e0e0e0',
-                                }}
-                                onClick={() => handleToggleGoal(role.id)}
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={() => handleToggleGoal(role.id)}
-                                    style={styles.checkbox}
-                                />
-                                <div style={styles.jobRoleInfo}>
-                                    <div style={styles.jobRoleTitle}>{role.title}</div>
-                                    <div style={styles.jobRoleCategory}>{role.category}</div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                <JobRolesGrid
+                    jobRoles={JobRoles}
+                    selectedGoals={selectedGoals}
+                    handleToggleGoal={handleToggleGoal}
+                    styles={styles}
+                />
 
                 {errors.goals && (
                     <p style={styles.fieldError}>{errors.goals}</p>

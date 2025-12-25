@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import AuthForm from './components/AuthForm';
 import ProfileSetup from './components/ProfileSetup';
+import ProfilePage from './components/ProfilePage';
 import { CourseReviewForm } from './components/CourseReviewForm';
 import ReviewsFeed from './components/RecentReviewsTable';
 import Navbar from './components/Navbar';
@@ -51,6 +52,7 @@ const Dashboard = ({ onLogout, currentPage, onNavigate }) => {
                         </Box>
                     )}
                     {currentPage === 'review' && <CourseReviewForm />}
+                    {currentPage === 'profile' && <ProfilePage />}
                 </Box>
             </Box>
         </Box>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../services/authService';
 import { getToken } from '../services/authService';
+import CoursesGrid from './CoursesGrid';
 
 const API_URL = 'http://localhost:8000';
 
@@ -101,13 +102,7 @@ const CourseSelection = ({ selectedCourses, onCoursesChange, onNext, onBack }) =
                     <div style={styles.progressLabel}>Career Goals</div>
                 </div>
             </div>
-
-            {/* Header */}
-            <div style={styles.header}>
-                <h1 style={styles.title}>Welcome to Afeka Advisor</h1>
-                <p style={styles.subtitle}>Let's set up your academic profile for personalized recommendations</p>
-            </div>
-
+            
             {/* Form Card */}
             <div style={styles.card}>
                 <h2 style={styles.sectionTitle}>Completed Courses</h2>
@@ -125,42 +120,13 @@ const CourseSelection = ({ selectedCourses, onCoursesChange, onNext, onBack }) =
                 />
 
                 {/* Course List */}
-                <div style={styles.courseList}>
-                    {filteredCourses.length === 0 ? (
-                        <p style={styles.noResults}>No courses found</p>
-                    ) : (
-                        filteredCourses.map((course) => {
-                            const isSelected = selectedCourses.includes(course.id);
-                            const courseCode = getCourseCode(course.description);
-                            const credits = course.workload || 0;
-
-                            return (
-                                <div
-                                    key={course.id}
-                                    style={{
-                                        ...styles.courseItem,
-                                        backgroundColor: isSelected ? '#f3e8ff' : 'white',
-                                    }}
-                                    onClick={() => handleToggleCourse(course.id)}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={() => handleToggleCourse(course.id)}
-                                        style={styles.checkbox}
-                                    />
-                                    <div style={styles.courseInfo}>
-                                        <div style={styles.courseName}>{course.name}</div>
-                                        {courseCode && (
-                                            <div style={styles.courseCode}>{courseCode}</div>
-                                        )}
-                                    </div>
-                                    <div style={styles.credits}>{credits} cr</div>
-                                </div>
-                            );
-                        })
-                    )}
-                </div>
+                <CoursesGrid
+                    filteredCourses={filteredCourses}
+                    selectedCourses={selectedCourses}
+                    handleToggleCourse={handleToggleCourse}
+                    getCourseCode={getCourseCode}
+                    styles={styles}
+                />
 
                 {/* Navigation Buttons */}
                 <div style={styles.buttonContainer}>
