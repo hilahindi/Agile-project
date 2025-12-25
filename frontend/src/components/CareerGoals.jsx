@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import JobRolesGrid from './JobRolesGrid';
-import { JobRoles } from '../utils';
 
 const CareerGoals = ({ selectedGoals, onGoalsChange, onNext, onBack }) => {
     const [errors, setErrors] = useState({});
@@ -31,6 +30,13 @@ const CareerGoals = ({ selectedGoals, onGoalsChange, onNext, onBack }) => {
         }
         onNext();
     };
+
+    const [careerGoalOptions, setCareerGoalOptions] = useState([]);
+    React.useEffect(() => {
+        fetch('http://localhost:8000/career-goals/')
+            .then(res => res.json())
+            .then(data => setCareerGoalOptions(data));
+    }, []);
 
     return (
         <div style={styles.container}>
@@ -73,7 +79,7 @@ const CareerGoals = ({ selectedGoals, onGoalsChange, onNext, onBack }) => {
 
                 {/* Job Roles Grid */}
                 <JobRolesGrid
-                    jobRoles={JobRoles}
+                    jobRoles={careerGoalOptions.map(g => ({ id: String(g.id), title: g.name, category: (g.technical_skills.concat(g.human_skills).join(', ') || '') }))}
                     selectedGoals={selectedGoals}
                     handleToggleGoal={(goalId) => handleToggleGoal(goalId, true)}
                     styles={styles}

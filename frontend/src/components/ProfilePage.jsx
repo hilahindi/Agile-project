@@ -3,7 +3,6 @@ import { Snackbar, Alert } from '@mui/material';
 import { useAuth } from '../services/authService';
 import CoursesGrid from './CoursesGrid';
 import JobRolesGrid from './JobRolesGrid';
-import { JobRoles } from '../utils';
 import './ProfilePage.css';
 import { DEPARTMENTS, YEARS } from '../utils';
 
@@ -24,6 +23,7 @@ const ProfilePage = () => {
     const [showGoalsSelector, setShowGoalsSelector] = useState(false);
     const [courses, setCourses] = useState([]);
     const [toastOpen, setToastOpen] = useState(false);
+    const [careerGoalOptions, setCareerGoalOptions] = useState([]);
 
     useEffect(() => {
         const body = document.body;
@@ -74,6 +74,9 @@ const ProfilePage = () => {
         fetch(`${API_URL}/students/?skip=0&limit=100`)
             .then(res => res.json())
             .then(data => setAllStudents(data));
+        fetch(`${API_URL}/career-goals/`)
+            .then(res => res.json())
+            .then(data => setCareerGoalOptions(data));
     }, [currentUser, token]);
 
     function handleChange(e) {
@@ -238,18 +241,24 @@ const ProfilePage = () => {
                         )}
 {editMode && showGoalsSelector ? (
     <div className="selector-wrapper">
-        <JobRolesGrid jobRoles={JobRoles} selectedGoals={selectedGoals} handleToggleGoal={(goalId) => {
-    setSelectedGoals([goalId]);
-    setFormData(prev => ({ ...prev, career_goals: [goalId] }));
-    setCareerGoalsError('');
-}} singleSelect={true} />
+        <JobRolesGrid jobRoles={careerGoalOptions.map(g => ({ id: String(g.id), title: g.name, category: (g.technical_skills.concat(g.human_skills).join(', ') || '') }))}
+            selectedGoals={selectedGoals}
+            handleToggleGoal={goalId => {
+                setSelectedGoals([goalId]);
+                setFormData(prev => ({ ...prev, career_goals: [goalId] }));
+                setCareerGoalsError('');
+            }}
+            singleSelect={true} />
         {careerGoalsError && <div style={{ color: '#dc3545', fontSize: 15, marginTop: 10 }}>{careerGoalsError}</div>}
     </div>
 ) : (
     <div className="tag-list">
-        {(editMode ? formData.career_goals : profile.career_goals || []).map(id => (
-            <span className="profile-tag" key={id}>{goalIdToName(id)}</span>
-        ))}
+        {(editMode ? formData.career_goals : profile.career_goals || []).map(id => {
+            const goal = careerGoalOptions.find(g => String(g.id) === String(id));
+            return (
+                <span className="profile-tag" key={id}>{goal ? goal.name : id}</span>
+            );
+        })}
         {(editMode ? formData.career_goals : profile.career_goals || []).length === 0 && <span className="profile-hint">No goals.</span>}
     </div>
 )}
