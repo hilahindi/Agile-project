@@ -56,7 +56,7 @@ const MyReviews = () => {
         <CardContent sx={{ minHeight: 180, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <Typography>No reviews submitted yet.</Typography>
           <Box mt={3}>
-            <Button variant="contained" color="primary" onClick={() => window.dispatchEvent(new CustomEvent('navigateToReview'))}>
+            <Button variant="contained" onClick={() => navigate('/submit-review')} sx={{ backgroundColor: '#00D9A3', color: 'white', '&:hover': { backgroundColor: '#00b386' } }}>
               Add New Review
             </Button>
           </Box>
@@ -69,7 +69,7 @@ const MyReviews = () => {
       <CardHeader 
         title="My Reviews" 
         sx={{ backgroundColor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}
-        action={<Button variant="contained" color="primary" onClick={() => window.dispatchEvent(new CustomEvent('navigateToReview'))}>Add New Review</Button>}
+        action={<Button variant="contained" onClick={() => navigate('/submit-review')} sx={{ backgroundColor: '#00D9A3', color: 'white', '&:hover': { backgroundColor: '#00b386' } }}>Add New Review</Button>}
       />
       <CardContent sx={{ p: 0 }}>
         <TableContainer component={Paper}>

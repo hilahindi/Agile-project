@@ -356,11 +356,21 @@ const CourseReviewForm = () => {
                     fullWidth 
                     required 
                     variant="outlined"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#00D9A3 !important',
+                        },
+                      },
+                    }}
                   >
                     <InputLabel 
                       id="course-select-label"
                       sx={{ 
                         fontSize: '16px',
+                        '&.Mui-focused': {
+                          color: '#00D9A3',
+                        },
                       }}
                     >
                       Course
@@ -383,11 +393,14 @@ const CourseReviewForm = () => {
                         '& .MuiOutlinedInput-root': {
                           borderRadius: '8px',
                           backgroundColor: '#fff',
+                          '& fieldset': {
+                            borderColor: '#ddd',
+                          },
                           '&:hover fieldset': {
                             borderColor: '#00D9A3',
                           },
                           '&.Mui-focused fieldset': {
-                            borderColor: '#00D9A3',
+                            borderColor: '#00D9A3 !important',
                             boxShadow: '0 0 0 3px rgba(0, 217, 163, 0.1)',
                           },
                         },

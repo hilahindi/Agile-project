@@ -123,7 +123,7 @@ const Navbar = ({ currentPage, onNavigate, onLogout }) => {
         >
           {/* Submit Review */}
           <Button
-            onClick={() => onNavigate('review')}
+            onClick={() => navigate('/submit-review')}
             variant={currentPage === 'review' ? 'outlined' : 'text'}
             sx={{
               position: 'relative',
