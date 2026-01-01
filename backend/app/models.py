@@ -17,6 +17,7 @@ class Student(Base):
     year = Column(Integer, nullable=True)
     courses_taken = Column(ARRAY(Integer), default=list)
     career_goals = Column(ARRAY(String), default=list)  # Career goals/job roles
+    human_skills = Column(ARRAY(Integer), default=list)  # Array of skill IDs
     created_at = Column(DateTime, default=datetime.utcnow)
 
     ratings = relationship("Rating", back_populates="student", cascade="all, delete-orphan")
