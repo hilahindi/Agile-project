@@ -5,6 +5,7 @@ import { useAuth } from '../services/authService';
 import { getToken } from '../services/authService';
 import CourseSelection from './CourseSelection';
 import CareerGoals from './CareerGoals';
+import HumanSkillsSelect from './HumanSkillsSelect';
 import { DEPARTMENTS, YEARS } from '../utils';
 
 const API_URL = 'http://localhost:8000';
@@ -97,6 +98,7 @@ const ProfileSetup = ({ onComplete, onBack }) => {
     const [year, setYear] = useState(null);
     const [selectedCourses, setSelectedCourses] = useState([]);
     const [selectedGoals, setSelectedGoals] = useState([]);
+    const [selectedHumanSkills, setSelectedHumanSkills] = useState([]);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
@@ -209,17 +211,54 @@ const ProfileSetup = ({ onComplete, onBack }) => {
                 }
             }
 
-            // Complete profile setup
-            if (onComplete) {
-                onComplete({ department, year, courses: selectedCourses, goals: selectedGoals });
-            }
+            // Move to next step
+            setCurrentStep(4);
+            setErrors({});
         } catch (err) {
             setErrors({ submit: err.message || 'Failed to save career goals' });
         } finally {
             setLoading(false);
         }
     };
-    
+
+    const handleStep4Next = async () => {
+        setLoading(true);
+        try {
+            // Save human skills
+            const authToken = token || getToken();
+            if (authToken && currentUser) {
+                const response = await fetch(`${API_URL}/students/${currentUser.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                    body: JSON.stringify({
+                        name: currentUser.name,
+                        faculty: department,
+                        year: year,
+                        courses_taken: selectedCourses,
+                        career_goals: selectedGoals,
+                        human_skills: selectedHumanSkills
+                    }),
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to save human skills');
+                }
+            }
+
+            // Complete profile setup
+            if (onComplete) {
+                onComplete({ department, year, courses: selectedCourses, goals: selectedGoals, human_skills: selectedHumanSkills });
+            }
+        } catch (err) {
+            setErrors({ submit: err.message || 'Failed to save human skills' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleBack = () => {
         if (currentStep === 1) {
             if (onBack) {
@@ -257,6 +296,11 @@ const ProfileSetup = ({ onComplete, onBack }) => {
         <div style={styles.progressIcon}>3</div>
         <div style={styles.progressLabel}>Career Goals</div>
     </div>
+    <div style={styles.progressLine}></div>
+    <div style={styles.progressStep}>
+        <div style={styles.progressIcon}>4</div>
+        <div style={styles.progressLabel}>Human Skills</div>
+    </div>
 </div>
                     <BasicInfoStep
                         department={department}
@@ -287,6 +331,16 @@ const ProfileSetup = ({ onComplete, onBack }) => {
                     onBack={handleBack}
                 />
             )}
+
+            {currentStep === 4 && (
+                <HumanSkillsSelect
+                    selectedSkills={selectedHumanSkills}
+                    onSkillsChange={setSelectedHumanSkills}
+                    onNext={handleStep4Next}
+                    onBack={handleBack}
+                />
+            )}
+
 
             {errors.submit && (
                 <div style={styles.errorContainer}>

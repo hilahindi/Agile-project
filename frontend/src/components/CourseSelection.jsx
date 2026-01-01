@@ -80,26 +80,23 @@ const CourseSelection = ({ selectedCourses, onCoursesChange, onNext, onBack }) =
             {/* Progress Indicator */}
             <div style={styles.progressContainer}>
                 <div style={styles.progressStep}>
-                    <div style={styles.progressIconCompleted}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="white"/>
-                        </svg>
-                    </div>
+                    <div style={styles.progressIconCompleted}>1</div>
                     <div style={styles.progressLabelCompleted}>Basic Info</div>
                 </div>
                 <div style={styles.progressLineCompleted}></div>
                 <div style={styles.progressStep}>
-                    <div style={styles.progressIconActive}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" fill="white"/>
-                        </svg>
-                    </div>
+                    <div style={styles.progressIconActive}>2</div>
                     <div style={styles.progressLabelActive}>Courses</div>
                 </div>
                 <div style={styles.progressLine}></div>
                 <div style={styles.progressStep}>
                     <div style={styles.progressIcon}>3</div>
                     <div style={styles.progressLabel}>Career Goals</div>
+                </div>
+                <div style={styles.progressLine}></div>
+                <div style={styles.progressStep}>
+                    <div style={styles.progressIcon}>4</div>
+                    <div style={styles.progressLabel}>Human Skills</div>
                 </div>
             </div>
             

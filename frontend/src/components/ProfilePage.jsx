@@ -24,6 +24,8 @@ const ProfilePage = () => {
     const [courses, setCourses] = useState([]);
     const [toastOpen, setToastOpen] = useState(false);
     const [careerGoalOptions, setCareerGoalOptions] = useState([]);
+    const [showSkillsSelector, setShowSkillsSelector] = useState(false);
+    const [humanSkillOptions, setHumanSkillOptions] = useState([]);
 
     useEffect(() => {
         const body = document.body;
@@ -49,13 +51,14 @@ const ProfilePage = () => {
                 const res = await fetch(`${API_URL}/students/${currentUser.id}`);
                 const data = await res.json();
                 setProfile(data);
-                setFormData({
-                    name: data.name || '',
-                    faculty: data.faculty || '',
-                    year: data.year || '',
-                    courses_taken: data.courses_taken || [],
-                    career_goals: data.career_goals || [],
-                });
+setFormData({
+                     name: data.name || '',
+                     faculty: data.faculty || '',
+                     year: data.year || '',
+                     courses_taken: data.courses_taken || [],
+                     career_goals: data.career_goals || [],
+                     human_skills: data.human_skills || []
+                 });
                 setSelectedGoals(data.career_goals || []);
             } catch(e) {
                 setError(e.message);
@@ -77,6 +80,7 @@ const ProfilePage = () => {
         fetch(`${API_URL}/career-goals/`)
             .then(res => res.json())
             .then(data => setCareerGoalOptions(data));
+        fetch(`${API_URL}/skills/?type=human`).then(res => res.json()).then(setHumanSkillOptions);
     }, [currentUser, token]);
 
     function handleChange(e) {
@@ -264,12 +268,62 @@ const ProfilePage = () => {
 )}
                     </div>
 
-                    {editMode && (
-                        <div className="button-row-center">
+                    
+                    {/* Editable Human Skills Section */}
+                    <div className="profile-section">
+                        <span className="section-title">Human Skills:</span>
+                        {editMode && (
+                            <button type="button" className="inline-edit-btn" onClick={() => setShowSkillsSelector(!showSkillsSelector)}>
+                                {showSkillsSelector ? 'Done Selecting' : 'Edit Human Skills'}
+                            </button>
+                        )}
+                        {editMode && showSkillsSelector ? (
+                            <div className="selector-wrapper">
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                                    {humanSkillOptions.map(skill => (
+                                        <label key={skill.id} style={{
+                                            border: '1px solid #ccc', borderRadius: 8, padding: 10, margin: 2,
+                                            background: (formData.human_skills || []).includes(skill.id) ? '#00D9A3' : '#f4f4f4',
+                                            color: (formData.human_skills || []).includes(skill.id) ? 'white' : 'black',
+                                            fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center'
+                                        }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={(formData.human_skills || []).includes(skill.id)}
+                                                onChange={() => {
+                                                    const current = formData.human_skills || [];
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        human_skills: current.includes(skill.id)
+                                                            ? current.filter(id => id !== skill.id)
+                                                            : [...current, skill.id]
+                                                    }));
+                                                }}
+                                                style={{ marginRight: 8 }}
+                                            />
+                                            {skill.name}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="tag-list">
+                                {((editMode ? formData.human_skills : profile.human_skills) || []).map(id => {
+                                    const skill = humanSkillOptions.find(x => x.id === id);
+                                    return (
+                                        <span className="profile-tag" key={id}>{skill ? skill.name : id}</span>
+                                    );
+                                })}
+                                {((editMode ? formData.human_skills : profile.human_skills) || []).length === 0 && <span className="profile-hint">No skills.</span>}
+                            </div>
+                        )}
+                    </div>
+                {editMode && (
+                        <div className="button-row-center" style={{ marginTop: 32 }}>
                             <button type="submit" className="apply-btn" disabled={loading || (editMode && (formData.career_goals?.length === 0))}>Apply Changes</button>
                         </div>
                     )}
-                </form>
+</form>
             </div>
 
             <Snackbar 
