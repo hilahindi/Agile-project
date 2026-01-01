@@ -25,6 +25,7 @@ def seed_database():
         db.execute(text("DROP TABLE IF EXISTS ratings CASCADE"))
         db.execute(text("DROP TABLE IF EXISTS students CASCADE")) 
         db.execute(text("DROP TABLE IF EXISTS courses CASCADE"))
+        db.execute(text("DROP TABLE IF EXISTS skills CASCADE"))
         db.commit()
         print("Existing tables dropped successfully.")
     except Exception as e:
