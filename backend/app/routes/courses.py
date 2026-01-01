@@ -16,7 +16,7 @@ def get_all_courses(skip: int = 0, limit: int = 100, db: Session = Depends(get_d
 
 @router.get("/{course_id}", response_model=schemas.CourseDetailsResponse)
 def get_course_details(course_id: int, db: Session = Depends(get_db)):
-    """Get detailed course information including prerequisites and skills."""
+    """Get detailed course information including prerequisites, skills, and clusters."""
     course = db.query(models.Course).filter(models.Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
@@ -45,6 +45,16 @@ def get_course_details(course_id: int, db: Session = Depends(get_db)):
         for skill in course.skills
     ]
     
+    # Map clusters
+    clusters = [
+        schemas.ClusterResponse(
+            id=cluster.id,
+            name=cluster.name,
+            description=cluster.description
+        )
+        for cluster in course.clusters
+    ]
+    
     return schemas.CourseDetailsResponse(
         id=course.id,
         name=course.name,
@@ -54,6 +64,7 @@ def get_course_details(course_id: int, db: Session = Depends(get_db)):
         status=course.status,
         prerequisites=prerequisites,
         skills=skills,
+        clusters=clusters,
         created_at=course.created_at
     )
 

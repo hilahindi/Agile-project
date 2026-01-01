@@ -46,6 +46,7 @@ class Course(Base):
         cascade="all, delete-orphan"
     )
     skills = relationship("Skill", secondary="course_skills", back_populates="courses")
+    clusters = relationship("Cluster", secondary="course_clusters", back_populates="courses")
 
 
 # --------------------
@@ -171,4 +172,36 @@ class CourseSkill(Base):
         UniqueConstraint('course_id', 'skill_id', name='uq_course_skill'),
         Index('ix_course_skills_course_id', 'course_id'),
         Index('ix_course_skills_skill_id', 'skill_id'),
+    )
+
+
+# --------------------
+# Clusters Table
+# --------------------
+class Cluster(Base):
+    __tablename__ = "clusters"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), unique=True, nullable=False)  # e.g., "Machine Learning"
+    description = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    courses = relationship("Course", secondary="course_clusters", back_populates="clusters")
+
+
+# --------------------
+# Course Clusters (Junction Table)
+# --------------------
+class CourseCluster(Base):
+    __tablename__ = "course_clusters"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    cluster_id = Column(Integer, ForeignKey("clusters.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint('course_id', 'cluster_id', name='uq_course_cluster'),
+        Index('ix_course_clusters_course_id', 'course_id'),
+        Index('ix_course_clusters_cluster_id', 'cluster_id'),
     )

@@ -142,9 +142,31 @@ class SkillResponse(BaseModel):
         from_attributes = True
 
 
+class ClusterResponse(BaseModel):
+    """Schema for Cluster in responses."""
+    id: int
+    name: str
+    description: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+    class Config:
+        from_attributes = True
+
+
 class CourseWithSkillsResponse(CourseResponse):
     """Extended Course response that includes associated skills."""
     skills: List['SkillResponse'] = []
+
+    class Config:
+        from_attributes = True
+
+
+class CourseWithSkillsAndClustersResponse(CourseResponse):
+    """Extended Course response with skills and clusters."""
+    skills: List['SkillResponse'] = []
+    clusters: List['ClusterResponse'] = []
 
     class Config:
         from_attributes = True
@@ -174,7 +196,7 @@ class PrerequisiteCourseResponse(BaseModel):
 
 
 class CourseDetailsResponse(BaseModel):
-    """Schema for detailed course response with prerequisites and skills."""
+    """Schema for detailed course response with prerequisites, skills, and clusters."""
     id: int
     name: str
     description: Optional[str] = None
@@ -183,6 +205,7 @@ class CourseDetailsResponse(BaseModel):
     status: Optional[str] = None
     prerequisites: List[PrerequisiteCourseResponse] = []
     skills: List['SkillResponse'] = []
+    clusters: List['ClusterResponse'] = []
     created_at: datetime
 
     class Config:
