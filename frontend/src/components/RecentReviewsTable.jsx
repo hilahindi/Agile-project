@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardContent,
@@ -57,6 +58,9 @@ const getScoreColor = (score) => {
  * in a clean, Material-UI table with comprehensive styling and features.
  */
 const ReviewsFeed = ({ onNavigateToReview }) => {
+  const navigate = useNavigate();
+  const [page, setPage] = useState(0);
+
   const { currentUser, token } = useAuth();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -178,7 +182,7 @@ const ReviewsFeed = ({ onNavigateToReview }) => {
   return (
     <Card sx={{ mt: 3 }}>
       <CardHeader
-        title="Course Reviews Feed"
+        title="Last Course Reviews"
         titleTypographyProps={{
           variant: 'h6',
           sx: { fontWeight: 600 },
@@ -236,6 +240,17 @@ const ReviewsFeed = ({ onNavigateToReview }) => {
                   }}
                 >
                   Course ID
+                </TableCell>
+                <TableCell
+                  align="left"
+                  sx={{
+                    fontWeight: 700,
+                    backgroundColor: '#f0f0f0',
+                    borderBottom: '2px solid #ddd',
+                    width: '15%',
+                  }}
+                >
+                  Course Name
                 </TableCell>
                 <TableCell
                   align="center"
@@ -317,14 +332,16 @@ const ReviewsFeed = ({ onNavigateToReview }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {reviews.map((review, index) => (
+              {reviews.slice(page * 3, page * 3 + 3).map((review, index) => (
                 <TableRow
                   key={review.id}
+                  onClick={() => navigate(`/courses/${review.course_id}?highlightReviewId=${review.id}`)}
                   sx={{
                     backgroundColor:
                       index % 2 === 0 ? '#ffffff' : '#fafafa',
                     '&:hover': {
-                      backgroundColor: '#f5f5f5',
+                      backgroundColor: '#e8f5e9',
+                      cursor: 'pointer',
                     },
                     borderBottom: '1px solid #e0e0e0',
                   }}
@@ -340,6 +357,13 @@ const ReviewsFeed = ({ onNavigateToReview }) => {
                   <TableCell align="left" sx={{ py: 1.5 }}>
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
                       {review.course_id}
+                    </Typography>
+                  </TableCell>
+
+                  {/* Course Name */}
+                  <TableCell align="left" sx={{ py: 1.5 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {review.course?.name || 'Unknown Course'}
                     </Typography>
                   </TableCell>
 
@@ -482,6 +506,19 @@ const ReviewsFeed = ({ onNavigateToReview }) => {
             </TableBody>
           </Table>
         </TableContainer>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 2, mb: 1 }}>
+          <Button
+            onClick={() => setPage(p => Math.max(0, p - 1))}
+            disabled={page === 0}
+            sx={{ minWidth: 0, px: 2, fontWeight: 'bold' }}>&lt;</Button>
+          <Typography sx={{ mx: 2, fontSize: 15, color: '#666' }}>
+            {page + 1} / {Math.max(1, Math.ceil(reviews.length / 3))}
+          </Typography>
+          <Button
+            onClick={() => setPage(p => (p + 1 < Math.ceil(reviews.length / 3) ? p + 1 : p))}
+            disabled={page + 1 >= Math.ceil(reviews.length / 3)}
+            sx={{ minWidth: 0, px: 2, fontWeight: 'bold' }}>&gt;</Button>
+        </Box>
       </CardContent>
     </Card>
   );

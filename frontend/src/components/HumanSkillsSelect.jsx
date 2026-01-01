@@ -1,42 +1,56 @@
-// frontend/src/components/CareerGoals.jsx
+import React, { useState, useEffect } from 'react';
 
-import React, { useState } from 'react';
-import JobRolesGrid from './JobRolesGrid';
+const API_URL = 'http://localhost:8000';
 
-const CareerGoals = ({ selectedGoals, onGoalsChange, onNext, onBack }) => {
-    const [errors, setErrors] = useState({});
+const HumanSkillsSelect = ({ selectedSkills, onSkillsChange, onNext, onBack }) => {
+    const [skillOptions, setSkillOptions] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [localSelection, setLocalSelection] = useState(selectedSkills || []);
 
-    const handleToggleGoal = (goalId, singleSelect = false) => {
-        if (singleSelect) {
-            onGoalsChange([goalId]);
+    useEffect(() => {
+        setLoading(true);
+        fetch(`${API_URL}/skills/?type=human`)
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    setSkillOptions(data);
+                } else if (data && data.results && Array.isArray(data.results)) {
+                    setSkillOptions(data.results);
+                } else {
+                    setSkillOptions([]);
+                }
+                setLoading(false);
+            })
+            .catch(err => {
+                setError('Failed to load human skills');
+                setLoading(false);
+            });
+    }, []);
+
+    const handleToggle = skillId => {
+        const isSelected = localSelection.includes(skillId);
+        let updated = [];
+        if (isSelected) {
+            updated = localSelection.filter(id => id !== skillId);
         } else {
-            const isSelected = selectedGoals.includes(goalId);
-            if (isSelected) {
-                onGoalsChange(selectedGoals.filter(id => id !== goalId));
-            } else {
-                onGoalsChange([...selectedGoals, goalId]);
-            }
+            updated = [...localSelection, skillId];
         }
-        if (errors.goals) {
-            setErrors({ ...errors, goals: null });
-        }
+        setLocalSelection(updated);
+        onSkillsChange(updated);
     };
 
-
     const handleNext = () => {
-        if (selectedGoals.length === 0) {
-            setErrors({ goals: 'Please select at least one career goal' });
+        if (!localSelection.length) {
+            setError('Please select at least one human skill');
             return;
         }
+        setError(null);
         onNext();
     };
 
-    const [careerGoalOptions, setCareerGoalOptions] = useState([]);
-    React.useEffect(() => {
-        fetch('http://localhost:8000/career-goals/')
-            .then(res => res.json())
-            .then(data => setCareerGoalOptions(data));
-    }, []);
+    if (loading) return <div style={styles.loading}>Loading human skills...</div>;
+    if (error) return <div style={styles.error}>{error}</div>;
 
     return (
         <div style={styles.container}>
@@ -53,67 +67,42 @@ const CareerGoals = ({ selectedGoals, onGoalsChange, onNext, onBack }) => {
                 </div>
                 <div style={styles.progressLineCompleted}></div>
                 <div style={styles.progressStep}>
-                    <div style={styles.progressIconActive}>3</div>
-                    <div style={styles.progressLabelActive}>Career Goals</div>
+                    <div style={styles.progressIconCompleted}>3</div>
+                    <div style={styles.progressLabelCompleted}>Career Goals</div>
                 </div>
-                <div style={styles.progressLine}></div>
+                <div style={styles.progressLineCompleted}></div>
                 <div style={styles.progressStep}>
-                    <div style={styles.progressIcon}>4</div>
-                    <div style={styles.progressLabel}>Human Skills</div>
+                    <div style={styles.progressIconActive}>4</div>
+                    <div style={styles.progressLabelActive}>Human Skills</div>
                 </div>
             </div>
-
-            {/* Form Card */}
             <div style={styles.card}>
-                <h2 style={styles.title}>Career Goals</h2>
-                <p style={styles.instruction}>
-                    Select job roles you're interested in (select at least one)
-                </p>
-
-                {/* Job Roles Grid */}
-                <JobRolesGrid
-                    jobRoles={careerGoalOptions.map(g => ({ id: String(g.id), title: g.name, category: (g.technical_skills.concat(g.human_skills).join(', ') || '') }))}
-                    selectedGoals={selectedGoals}
-                    handleToggleGoal={(goalId) => handleToggleGoal(goalId, true)}
-                    styles={styles}
-                    singleSelect={true}
-                />
-
-                {errors.goals && (
-                    <p style={styles.fieldError}>{errors.goals}</p>
-                )}
-
-                {/* Navigation Buttons */}
-                <div style={styles.buttonContainer}>
-                    <button
-                        type="button"
-                        onClick={onBack}
-                        style={styles.backButton}
-                    >
-                        Back
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleNext}
-                        style={styles.continueButton}
-                    >
-                        Continue →
-                    </button>
-                </div>
+            <h2 style={styles.title}>Human Skills</h2>
+            <p style={styles.subtitle}>Select all human skills you think you own</p>
+            <div style={styles.skillsGrid}>
+                {skillOptions.map(skill => (
+                    <label key={skill.id} style={{ ...styles.skillItem, ...(localSelection.includes(skill.id) ? styles.skillItemActive : {}) }}>
+                        <input
+                            type="checkbox"
+                            checked={localSelection.includes(skill.id)}
+                            onChange={() => handleToggle(skill.id)}
+                            style={styles.checkbox}
+                        />
+                        <span>{skill.name}</span>
+                    </label>
+                ))}
+            </div>
+            {error && <div style={styles.error}>{error}</div>}
+            <div style={styles.buttonContainer}>
+                <button type="button" onClick={onBack} style={styles.backButton}>Back</button>
+                <button type="button" onClick={handleNext} style={styles.continueButton}>Continue →</button>
             </div>
         </div>
+    </div>
     );
 };
 
 const styles = {
-    container: {
-        minHeight: '100vh',
-        backgroundColor: '#f5f5f5',
-        padding: '40px 20px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-    },
     progressContainer: {
         display: 'flex',
         alignItems: 'center',
@@ -191,65 +180,66 @@ const styles = {
         borderRadius: '12px',
         padding: '40px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        maxWidth: '800px',
+        maxWidth: '650px',
         width: '100%',
+        margin: '0 auto',
+        display: 'flex',
+        flexDirection: 'column'
     },
     title: {
         fontSize: '24px',
         fontWeight: 'bold',
         marginBottom: '8px',
-        color: '#333',
+        color: '#333'
     },
-    instruction: {
+    subtitle: {
         fontSize: '14px',
         color: '#666',
         marginBottom: '24px',
     },
-    jobRolesGrid: {
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '12px',
-        marginBottom: '32px',
+    skillsGrid: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '14px',
+        marginBottom: '24px',
     },
-    jobRoleItem: {
+    skillItem: {
         display: 'flex',
         alignItems: 'center',
-        padding: '16px',
+        background: '#f5f5f5',
         borderRadius: '8px',
-        border: '1px solid #e0e0e0',
+        padding: '10px 16px',
         cursor: 'pointer',
-        transition: 'all 0.2s',
-        gap: '12px',
+        fontWeight: 'bold',
+        border: '1px solid #ddd',
+        transition: 'background 0.2s',
+        fontSize: '16px',
+    },
+    skillItemActive: {
+        background: '#00D9A3',
+        color: 'white',
+        border: '1px solid #00D9A3',
     },
     checkbox: {
-        width: '20px',
-        height: '20px',
-        cursor: 'pointer',
-        flexShrink: 0,
+        marginRight: '10px',
+        transform: 'scale(1.2)'
     },
-    jobRoleInfo: {
-        flex: 1,
+    loading: {
+        textAlign: 'center',
+        padding: '60px',
+        fontSize: '18px',
     },
-    jobRoleTitle: {
-        fontSize: '16px',
-        fontWeight: '600',
-        color: '#333',
-        marginBottom: '4px',
-    },
-    jobRoleCategory: {
-        fontSize: '14px',
-        color: '#666',
-    },
-    fieldError: {
+    error: {
         color: '#dc3545',
         fontSize: '14px',
-        marginBottom: '16px',
+        marginTop: '10px',
+        textAlign: 'center',
     },
     buttonContainer: {
         display: 'flex',
         justifyContent: 'space-between',
-        marginTop: '32px',
         gap: '16px',
+        marginTop: '32px',
     },
     backButton: {
         padding: '12px 24px',
@@ -279,5 +269,5 @@ const styles = {
     },
 };
 
-export default CareerGoals;
+export default HumanSkillsSelect;
 

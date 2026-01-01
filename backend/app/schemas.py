@@ -45,8 +45,9 @@ class CourseBase(BaseModel):
     """Base schema for Course."""
     name: str
     description: Optional[str] = None
-    difficulty: Optional[int] = None
     workload: Optional[int] = None
+    credits: Optional[float] = None
+    status: Optional[str] = None
 
 
 class CourseCreate(CourseBase):
@@ -117,6 +118,60 @@ class CourseReviewCreate(CourseReviewBase):
     pass
 
 
+class CourseResponse(BaseModel):
+    """Schema for Course in responses."""
+    id: int
+    name: str
+    description: Optional[str] = None
+    difficulty: Optional[int] = None
+    workload: Optional[int] = None
+    credits: Optional[float] = None
+
+    class Config:
+        from_attributes = True
+
+
+class SkillResponse(BaseModel):
+    """Schema for Skill in responses."""
+    id: int
+    name: str
+    type: str  # 'technical' or 'human'
+    description: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ClusterResponse(BaseModel):
+    """Schema for Cluster in responses."""
+    id: int
+    name: str
+    description: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+    class Config:
+        from_attributes = True
+
+
+class CourseWithSkillsResponse(CourseResponse):
+    """Extended Course response that includes associated skills."""
+    skills: List['SkillResponse'] = []
+
+    class Config:
+        from_attributes = True
+
+
+class CourseWithSkillsAndClustersResponse(CourseResponse):
+    """Extended Course response with skills and clusters."""
+    skills: List['SkillResponse'] = []
+    clusters: List['ClusterResponse'] = []
+
+    class Config:
+        from_attributes = True
+
+
 class CourseReviewResponse(CourseReviewBase):
     """Schema for Course Review response."""
     id: int
@@ -124,9 +179,67 @@ class CourseReviewResponse(CourseReviewBase):
     final_score: float
     created_at: datetime
     student: Optional['StudentResponse'] = None
+    course: Optional['CourseResponse'] = None
 
     class Config:
         from_attributes = True
+
+
+# ==================== COURSE DETAIL SCHEMAS ====================
+class PrerequisiteCourseResponse(BaseModel):
+    """Schema for prerequisite course in course details."""
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
+class CourseDetailsResponse(BaseModel):
+    """Schema for detailed course response with prerequisites, skills, and clusters."""
+    id: int
+    name: str
+    description: Optional[str] = None
+    workload: Optional[int] = None
+    credits: Optional[float] = None
+    status: Optional[str] = None
+    prerequisites: List[PrerequisiteCourseResponse] = []
+    skills: List['SkillResponse'] = []
+    clusters: List['ClusterResponse'] = []
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CourseStatsResponse(BaseModel):
+    """Schema for course statistics (aggregated ratings)."""
+    review_count: int
+    avg_final_score: Optional[float] = 0.0
+    avg_industry_relevance: Optional[float] = 0.0
+    avg_instructor_quality: Optional[float] = 0.0
+    avg_useful_learning: Optional[float] = 0.0
+
+
+class CourseReviewDetailedResponse(CourseReviewBase):
+    """Schema for detailed course review with student name."""
+    id: int
+    course_id: int
+    student_id: int
+    final_score: float
+    created_at: datetime
+    student_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class PaginatedCourseReviewsResponse(BaseModel):
+    """Schema for paginated course reviews."""
+    items: List[CourseReviewDetailedResponse]
+    page: int
+    page_size: int
+    total: int
 
 
 # Rebuild models to resolve forward references

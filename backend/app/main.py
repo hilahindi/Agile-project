@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles 
 from fastapi.middleware.cors import CORSMiddleware # <<< 1. IMPORT
-from .routes import students, courses, ratings, course_reviews, auth
+from .routes import students, courses, ratings, course_reviews, auth, career_goals
 from .database import Base, engine
 # CRITICAL: Import all models to ensure they're loaded into memory before table creation
 from .models import Student, Course, Rating, CourseReview
@@ -38,6 +38,7 @@ app.include_router(courses.router)
 app.include_router(ratings.router)
 app.include_router(course_reviews.router)
 app.include_router(auth.router)
+app.include_router(career_goals.router)
 
 # Mount the StaticFiles directory to serve the frontend
 if os.path.isdir(FRONTEND_BUILD_DIR):

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Card,
@@ -11,6 +11,10 @@ import {
   CircularProgress,
   Grid,
   Divider,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import LanguagesInput from './LanguagesInput';
 import CourseOutputsInput from './CourseOutputsInput';
@@ -38,8 +42,33 @@ const textFieldSx = {
   },
 };
 
+// Reusable Select styling (same as TextField)
+const selectSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '8px',
+    '&:hover fieldset': {
+      borderColor: '#00D9A3',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#00D9A3',
+      boxShadow: '0 0 0 3px rgba(0, 217, 163, 0.1)',
+    },
+  },
+  '& .MuiInputBase-input': {
+    fontSize: '16px',
+  },
+  '& .MuiFormLabel-root.Mui-focused': {
+    color: '#00D9A3',
+  },
+};
+
 const CourseReviewForm = () => {
   const { currentUser, token } = useAuth();
+  
+  // Courses list state
+  const [courses, setCourses] = useState([]);
+  const [coursesLoading, setCoursesLoading] = useState(true);
+  const [coursesError, setCoursesError] = useState('');
   
   const [formData, setFormData] = useState({
     course_id: '',
@@ -58,15 +87,50 @@ const CourseReviewForm = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [finalScore, setFinalScore] = useState(null);
 
+  // Fetch courses on component mount
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setCoursesLoading(true);
+        setCoursesError('');
+        const url = `${API_BASE_URL}/courses/?skip=0&limit=100`;
+        console.log(`[CourseSelect] Fetching from: ${url}`);
+        
+        const response = await fetch(url);
+        console.log(`[CourseSelect] Response status: ${response.status}`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`[CourseSelect] Error ${response.status}: ${errorText}`);
+          setCoursesError(`HTTP ${response.status}`);
+          setCoursesLoading(false);
+          return;
+        }
+        
+        const data = await response.json();
+        console.log(`[CourseSelect] Received courses:`, data);
+        
+        if (Array.isArray(data) && data.length > 0) {
+          setCourses(data);
+        } else {
+          console.warn('[CourseSelect] No courses in response');
+          setCourses([]);
+        }
+        setCoursesLoading(false);
+      } catch (error) {
+        console.error('[CourseSelect] Fetch failed:', error.message);
+        setCoursesError(error.message || 'Failed to load courses');
+        setCoursesLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
   // Validate form data before submission
   const validateFormData = () => {
-    if (!formData.course_id || parseInt(formData.course_id) <= 0) {
-      setErrorMessage('Please enter a valid Course ID');
-      return false;
-    }
-
-    if (formData.course_id.toString().length > 10) {
-      setErrorMessage('Course ID is invalid');
+    if (!formData.course_id) {
+      setErrorMessage('Please select a course');
       return false;
     }
 
@@ -139,7 +203,7 @@ const CourseReviewForm = () => {
     try {
       // Construct payload WITHOUT student_id - it's added by the server from auth context
       const payload = {
-        course_id: parseInt(formData.course_id),
+        course_id: typeof formData.course_id === 'string' ? parseInt(formData.course_id) : formData.course_id,
         languages_learned: formData.languages_learned.join(', ') || null,
         course_outputs: formData.course_outputs.join(', ') || null,
         industry_relevance_text: formData.industry_relevance_text || null,
@@ -238,7 +302,7 @@ const CourseReviewForm = () => {
           </Box>
 
           {/* Content Wrapper */}
-          <Box sx={{ px: 4, pb: 4, width: '90%' }}>
+          <Box sx={{ px: 4, pb: 4, minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             {/* Messages */}
             {successMessage && (
               <Alert severity="success" sx={{ mb: 3, borderRadius: '8px', fontSize: '14px' }}>
@@ -288,34 +352,109 @@ const CourseReviewForm = () => {
 
               <Grid container spacing={2.5} sx={{ mb: 4 }}>
                 <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Course ID"
-                    name="course_id"
-                    type="number"
-                    value={formData.course_id}
-                    onChange={handleTextChange}
-                    required
+                  <FormControl 
+                    fullWidth 
+                    required 
                     variant="outlined"
-                    size="medium"
-                    inputProps={{
-                      style: { MozAppearance: 'textfield' },
-                    }}
                     sx={{
-                      ...textFieldSx,
-                      '& input[type=number]': {
-                        MozAppearance: 'textfield',
-                      },
-                      '& input[type=number]::-webkit-outer-spin-button': {
-                        WebkitAppearance: 'none',
-                        margin: 0,
-                      },
-                      '& input[type=number]::-webkit-inner-spin-button': {
-                        WebkitAppearance: 'none',
-                        margin: 0,
+                      '& .MuiOutlinedInput-root': {
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#00D9A3 !important',
+                        },
                       },
                     }}
-                  />
+                  >
+                    <InputLabel 
+                      id="course-select-label"
+                      sx={{ 
+                        fontSize: '16px',
+                        '&.Mui-focused': {
+                          color: '#00D9A3',
+                        },
+                      }}
+                    >
+                      Course
+                    </InputLabel>
+                    <Select
+                      labelId="course-select-label"
+                      id="course-select"
+                      value={formData.course_id}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          course_id: e.target.value,
+                        }))
+                      }
+                      label="Course"
+                      sx={{
+                        width: '100%',
+                        minWidth: '300px',
+                        borderRadius: '8px',
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          backgroundColor: '#fff',
+                          '& fieldset': {
+                            borderColor: '#ddd',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: '#00D9A3',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#00D9A3 !important',
+                            boxShadow: '0 0 0 3px rgba(0, 217, 163, 0.1)',
+                          },
+                        },
+                        '& .MuiOutlinedInput-input': {
+                          padding: '16px 14px',
+                          fontSize: '16px',
+                        },
+                        '& .MuiFormLabel-root.Mui-focused': {
+                          color: '#00D9A3',
+                        },
+                      }}
+                    >
+                      {/* Loading state */}
+                      {coursesLoading && (
+                        <MenuItem disabled>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#666' }}>
+                            <CircularProgress size={16} />
+                            <span>Loading courses...</span>
+                          </Box>
+                        </MenuItem>
+                      )}
+
+                      {/* Error state */}
+                      {coursesError && !coursesLoading && courses.length === 0 && (
+                        <MenuItem disabled sx={{ color: '#d32f2f' }}>
+                          Failed to load courses
+                        </MenuItem>
+                      )}
+
+                      {/* Courses list */}
+                      {courses.length > 0 &&
+                        courses.map((course) => (
+                          <MenuItem 
+                            key={course.id} 
+                            value={course.id}
+                            sx={{
+                              fontSize: '16px',
+                              '&:hover': {
+                                backgroundColor: 'rgba(0, 217, 163, 0.1)',
+                              },
+                              '&.Mui-selected': {
+                                backgroundColor: 'rgba(0, 217, 163, 0.15)',
+                                color: '#00D9A3',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(0, 217, 163, 0.2)',
+                                },
+                              },
+                            }}
+                          >
+                            {course.id} - {course.name}
+                          </MenuItem>
+                        ))}
+                    </Select>
+                  </FormControl>
                 </Grid>
               </Grid>
 
@@ -476,11 +615,10 @@ const CourseReviewForm = () => {
                     p: 4,
                     borderRadius: '8px',
                     width: '100%',
-                    maxWidth: '600px',
                   }}
                 >
                   <Grid container spacing={4}>
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid item xs={12} sm={12} md={4}>
                       <Box sx={{ textAlign: 'center' }}>
                         <Typography
                           variant="body1"
@@ -494,7 +632,7 @@ const CourseReviewForm = () => {
                           Industry Relevance
                         </Typography>
                         <Rating
-                          name="industry_relevance_rating"
+                          name= "industry_relevance_rating"
                           value={formData.industry_relevance_rating}
                           onChange={(e, value) =>
                             handleRatingChange('industry_relevance_rating', value)
@@ -512,7 +650,7 @@ const CourseReviewForm = () => {
                       </Box>
                     </Grid>
 
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid item xs={12} sm={12} md={4}>
                       <Box sx={{ textAlign: 'center' }}>
                         <Typography
                           variant="body1"
@@ -544,7 +682,7 @@ const CourseReviewForm = () => {
                       </Box>
                     </Grid>
 
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid item xs={12} sm={12} md={4}>
                       <Box sx={{ textAlign: 'center' }}>
                         <Typography
                           variant="body1"
@@ -603,8 +741,8 @@ const CourseReviewForm = () => {
                     padding: '12px 24px',
                     transition: 'all 0.2s',
                     '&:hover': {
-                      backgroundColor: '#6d28d9',
-                      boxShadow: '0 4px 12px rgba(0, 217, 163, 0.3)',
+                      backgroundColor: '#00b386',
+                      boxShadow: '0 4px 12px rgba(0, 217, 163, 0.13)',
                     },
                     '&:disabled': {
                       backgroundColor: '#9ca3af',

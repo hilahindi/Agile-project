@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../services/authService';
 import { getToken } from '../services/authService';
+import CoursesGrid from './CoursesGrid';
 
 const API_URL = 'http://localhost:8000';
 
@@ -79,20 +80,12 @@ const CourseSelection = ({ selectedCourses, onCoursesChange, onNext, onBack }) =
             {/* Progress Indicator */}
             <div style={styles.progressContainer}>
                 <div style={styles.progressStep}>
-                    <div style={styles.progressIconCompleted}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="white"/>
-                        </svg>
-                    </div>
+                    <div style={styles.progressIconCompleted}>1</div>
                     <div style={styles.progressLabelCompleted}>Basic Info</div>
                 </div>
                 <div style={styles.progressLineCompleted}></div>
                 <div style={styles.progressStep}>
-                    <div style={styles.progressIconActive}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" fill="white"/>
-                        </svg>
-                    </div>
+                    <div style={styles.progressIconActive}>2</div>
                     <div style={styles.progressLabelActive}>Courses</div>
                 </div>
                 <div style={styles.progressLine}></div>
@@ -100,14 +93,13 @@ const CourseSelection = ({ selectedCourses, onCoursesChange, onNext, onBack }) =
                     <div style={styles.progressIcon}>3</div>
                     <div style={styles.progressLabel}>Career Goals</div>
                 </div>
+                <div style={styles.progressLine}></div>
+                <div style={styles.progressStep}>
+                    <div style={styles.progressIcon}>4</div>
+                    <div style={styles.progressLabel}>Human Skills</div>
+                </div>
             </div>
-
-            {/* Header */}
-            <div style={styles.header}>
-                <h1 style={styles.title}>Welcome to Afeka Advisor</h1>
-                <p style={styles.subtitle}>Let's set up your academic profile for personalized recommendations</p>
-            </div>
-
+            
             {/* Form Card */}
             <div style={styles.card}>
                 <h2 style={styles.sectionTitle}>Completed Courses</h2>
@@ -125,42 +117,13 @@ const CourseSelection = ({ selectedCourses, onCoursesChange, onNext, onBack }) =
                 />
 
                 {/* Course List */}
-                <div style={styles.courseList}>
-                    {filteredCourses.length === 0 ? (
-                        <p style={styles.noResults}>No courses found</p>
-                    ) : (
-                        filteredCourses.map((course) => {
-                            const isSelected = selectedCourses.includes(course.id);
-                            const courseCode = getCourseCode(course.description);
-                            const credits = course.workload || 0;
-
-                            return (
-                                <div
-                                    key={course.id}
-                                    style={{
-                                        ...styles.courseItem,
-                                        backgroundColor: isSelected ? '#f3e8ff' : 'white',
-                                    }}
-                                    onClick={() => handleToggleCourse(course.id)}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={() => handleToggleCourse(course.id)}
-                                        style={styles.checkbox}
-                                    />
-                                    <div style={styles.courseInfo}>
-                                        <div style={styles.courseName}>{course.name}</div>
-                                        {courseCode && (
-                                            <div style={styles.courseCode}>{courseCode}</div>
-                                        )}
-                                    </div>
-                                    <div style={styles.credits}>{credits} cr</div>
-                                </div>
-                            );
-                        })
-                    )}
-                </div>
+                <CoursesGrid
+                    filteredCourses={filteredCourses}
+                    selectedCourses={selectedCourses}
+                    handleToggleCourse={handleToggleCourse}
+                    getCourseCode={getCourseCode}
+                    styles={styles}
+                />
 
                 {/* Navigation Buttons */}
                 <div style={styles.buttonContainer}>
