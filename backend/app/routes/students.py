@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .. import models, schemas, crud
 from ..database import get_db
+from ..auth_utils import get_current_student
 from typing import List
 
 router = APIRouter(prefix="/students", tags=["students"])
@@ -23,6 +24,28 @@ def get_all_students(skip: int = 0, limit: int = 100, db: Session = Depends(get_
             'created_at': s.created_at,
         }
     return [serialize(s) for s in students]
+
+
+@router.get("/me", response_model=schemas.StudentResponse)
+def get_current_user_profile(
+    current_student = Depends(get_current_student),
+    db: Session = Depends(get_db),
+):
+    """Get the current authenticated student's profile."""
+    student = db.query(models.Student).filter(models.Student.id == current_student.id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    return {
+        'id': student.id,
+        'name': student.name,
+        'faculty': student.faculty,
+        'year': student.year,
+        'career_goal_id': student.career_goal_id,
+        'career_goal': student.career_goal if hasattr(student, 'career_goal') else None,
+        'human_skill_ids': [sk.id for sk in getattr(student, 'human_skills', [])],
+        'courses_taken': [sc.course_id for sc in getattr(student, 'student_courses', [])],
+        'created_at': student.created_at,
+    }
 
 
 @router.get("/{student_id}", response_model=schemas.StudentResponse)

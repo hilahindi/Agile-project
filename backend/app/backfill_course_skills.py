@@ -1,5 +1,5 @@
 """
-Idempotent backfill script to map courses to skills using intelligent keyword matching.
+Idempotent backfill script to map courses to skills using intelligent, domain-aware categorization.
 Run this after seeding the database with courses and skills.
 
 Usage:
@@ -15,38 +15,312 @@ from sqlalchemy.exc import IntegrityError
 import sys
 
 # ============================================================================
-# KEYWORD MAPPINGS
+# SKILL MAPPING HEURISTICS - Domain-Aware Course Categorization
 # ============================================================================
 
-TECHNICAL_SKILL_KEYWORDS = {
-    "Python": ["python", "py", "ml", "machine learning", "ai", "data science", "deep learning"],
-    "JavaScript": ["javascript", "js", "react", "vue", "angular", "frontend", "web", "node", "typescript"],
-    "SQL": ["database", "sql", "db", "relational", "query", "data"],
-    "React": ["react", "frontend", "ui", "interface", "javascript"],
-    "Node.js": ["node", "nodejs", "backend", "api", "server", "express"],
-    "TensorFlow": ["tensorflow", "ml", "machine learning", "deep learning", "neural", "ai", "keras"],
-    "C++": ["c++", "cpp", "assembly", "low-level", "systems", "compiler", "os"],
-    "AWS": ["aws", "amazon", "cloud", "infrastructure", "devops", "security"],
-    "Docker": ["docker", "container", "containerization", "devops"],
-    "Git": ["git", "version control", "github", "gitlab"],
+# Predefined skill mappings for specific courses or course categories
+COURSE_SKILL_MAPPINGS = {
+    # Mathematics Courses
+    "calculus": {
+        "technical": ["Calculus", "Linear Algebra"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "linear algebra": {
+        "technical": ["Linear Algebra", "Discrete Mathematics"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "linear algebra 2": {
+        "technical": ["Linear Algebra"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "discrete mathematics": {
+        "technical": ["Discrete Mathematics", "Computational Theory"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "probability": {
+        "technical": ["Probability & Statistics", "Linear Algebra"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "intro to probability": {
+        "technical": ["Probability & Statistics"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "statistics": {
+        "technical": ["Probability & Statistics", "Linear Algebra"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "database systems": {
+        "technical": ["SQL", "Database Design"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "machine learning": {
+        "technical": ["Machine Learning", "Python", "Linear Algebra", "Probability & Statistics"],
+        "human": ["Self-learner", "Problem-solving", "Critical Thinking"]
+    },
+    "analysis of algorithms": {
+        "technical": ["Algorithms", "Computational Theory", "Linear Algebra"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "advanced algorithms": {
+        "technical": ["Algorithms", "Computational Theory", "Linear Algebra"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "mathematical logic": {
+        "technical": ["Mathematical Logic", "Discrete Mathematics", "Computational Theory"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    
+    # Intro CS Courses
+    "intro to computer science": {
+        "technical": ["Python", "Data Structures", "Algorithms", "Software Design"],
+        "human": ["Problem-solving", "Self-learner", "Teamwork"]
+    },
+    
+    # Core Programming & Theory
+    "object oriented programming": {
+        "technical": ["Python", "C++", "Software Design", "Data Structures"],
+        "human": ["Problem-solving", "Teamwork"]
+    },
+    "data structures": {
+        "technical": ["Data Structures", "Algorithms", "Python"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "algorithms": {
+        "technical": ["Algorithms", "Data Structures", "Computational Theory"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "analysis of algorithms": {
+        "technical": ["Algorithms", "Computational Theory", "Linear Algebra"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    
+    # Systems & Low-Level
+    "computer org": {
+        "technical": ["Computer Architecture", "Operating Systems", "C++"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "assembly": {
+        "technical": ["Computer Architecture", "Operating Systems", "C++"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "operating system": {
+        "technical": ["Operating Systems", "Computer Architecture", "C++", "Parallel Programming"],
+        "human": ["Problem-solving", "Teamwork"]
+    },
+    "system programming": {
+        "technical": ["Operating Systems", "C++", "Computer Architecture"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "embedded": {
+        "technical": ["Embedded Systems", "Computer Architecture", "C++"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    
+    # Theory & Computation
+    "computational models": {
+        "technical": ["Computational Theory", "Discrete Mathematics", "Algorithms"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "automata": {
+        "technical": ["Computational Theory", "Discrete Mathematics", "Mathematical Logic"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "compiler": {
+        "technical": ["Compiler Design", "Computational Theory", "C++"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "parallel": {
+        "technical": ["Parallel Programming", "Operating Systems", "C++"],
+        "human": ["Problem-solving", "Teamwork"]
+    },
+    
+    # Network & Communication
+    "network": {
+        "technical": ["Network Programming", "Computer Architecture"],
+        "human": ["Problem-solving", "Teamwork"]
+    },
+    "communication": {
+        "technical": ["Network Programming", "Algorithms"],
+        "human": ["Problem-solving", "Communication"]
+    },
+    
+    # Software Engineering & Design
+    "software engineering": {
+        "technical": ["Software Design", "Data Structures", "Testing & QA", "Agile Development"],
+        "human": ["Teamwork", "Communication", "Leadership", "Problem-solving"]
+    },
+    "design": {
+        "technical": ["Software Design", "Testing & QA"],
+        "human": ["Teamwork", "Problem-solving", "Creativity"]
+    },
+    "testing": {
+        "technical": ["Testing & QA", "Python", "Software Design"],
+        "human": ["Problem-solving", "Attention to Detail"]
+    },
+    "agile": {
+        "technical": ["Agile Development", "Testing & QA", "Git", "CI/CD"],
+        "human": ["Teamwork", "Communication", "Adaptability", "Leadership"]
+    },
+    
+    # Database
+    "database": {
+        "technical": ["SQL", "Database Design", "Data Structures"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "sql": {
+        "technical": ["SQL", "Database Design"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "big data": {
+        "technical": ["SQL", "Database Design", "Python", "Data Structures"],
+        "human": ["Problem-solving", "Self-learner"]
+    },
+    
+    # Web Development
+    "web": {
+        "technical": ["React", "JavaScript", "HTML/CSS", "Node.js", "SQL"],
+        "human": ["Problem-solving", "Teamwork", "Creativity"]
+    },
+    "frontend": {
+        "technical": ["React", "JavaScript", "HTML/CSS", "Software Design"],
+        "human": ["Problem-solving", "Teamwork", "Creativity"]
+    },
+    "backend": {
+        "technical": ["Node.js", "Python", "SQL", "Docker", "AWS"],
+        "human": ["Problem-solving", "Teamwork"]
+    },
+    "ui": {
+        "technical": ["React", "JavaScript", "HTML/CSS", "Computer Graphics"],
+        "human": ["Teamwork", "Communication", "Creativity"]
+    },
+    "user interface": {
+        "technical": ["React", "JavaScript", "HTML/CSS", "Software Design"],
+        "human": ["Teamwork", "Communication", "Creativity"]
+    },
+    "ux": {
+        "technical": ["React", "JavaScript", "HTML/CSS"],
+        "human": ["Communication", "Creativity", "Problem-solving"]
+    },
+    "visual design": {
+        "technical": ["HTML/CSS", "Computer Graphics"],
+        "human": ["Creativity", "Communication"]
+    },
+    
+    # AI & Machine Learning
+    "machine learning": {
+        "technical": ["Machine Learning", "Python", "Linear Algebra", "Probability & Statistics"],
+        "human": ["Self-learner", "Problem-solving", "Critical Thinking"]
+    },
+    "deep learning": {
+        "technical": ["TensorFlow", "PyTorch", "Python", "Linear Algebra"],
+        "human": ["Self-learner", "Problem-solving", "Critical Thinking"]
+    },
+    "neural": {
+        "technical": ["TensorFlow", "PyTorch", "Python", "Linear Algebra"],
+        "human": ["Self-learner", "Problem-solving"]
+    },
+    "ai": {
+        "technical": ["Python", "Algorithms", "Machine Learning"],
+        "human": ["Problem-solving", "Self-learner"]
+    },
+    "natural language": {
+        "technical": ["Python", "Machine Learning", "Discrete Mathematics"],
+        "human": ["Problem-solving", "Self-learner"]
+    },
+    "vision": {
+        "technical": ["Computer Vision", "Python", "Linear Algebra", "Machine Learning"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "game": {
+        "technical": ["Python", "C++", "Algorithms", "Software Design"],
+        "human": ["Teamwork", "Creativity", "Problem-solving"]
+    },
+    
+    # Security
+    "security": {
+        "technical": ["Cryptography", "Network Security", "Python"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "cryptography": {
+        "technical": ["Cryptography", "Linear Algebra", "Probability & Statistics"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "cyber": {
+        "technical": ["Network Security", "Cryptography", "Operating Systems"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "secure coding": {
+        "technical": ["Secure Coding", "Python", "Testing & QA"],
+        "human": ["Problem-solving", "Attention to Detail"]
+    },
+    
+    # Graphics & Vision
+    "graphics": {
+        "technical": ["Computer Graphics", "Linear Algebra", "C++"],
+        "human": ["Creativity", "Problem-solving"]
+    },
+    
+    # DevOps & Tools
+    "devops": {
+        "technical": ["Docker", "AWS", "Git", "CI/CD", "Linux"],
+        "human": ["Teamwork", "Problem-solving"]
+    },
+    "docker": {
+        "technical": ["Docker", "AWS", "Git"],
+        "human": ["Problem-solving"]
+    },
+    "development tools": {
+        "technical": ["Git", "Docker", "CI/CD"],
+        "human": ["Problem-solving"]
+    },
+    
+    # Projects & Seminars
+    "project": {
+        "technical": ["Software Design", "Data Structures", "Algorithms", "Testing & QA"],
+        "human": ["Teamwork", "Communication", "Leadership", "Problem-solving"]
+    },
+    "seminar": {
+        "technical": ["Software Design", "Algorithms"],
+        "human": ["Communication", "Self-learner", "Teamwork"]
+    },
+    "capstone": {
+        "technical": ["Software Design", "Data Structures", "Algorithms", "Testing & QA"],
+        "human": ["Teamwork", "Communication", "Leadership"]
+    },
+    
+    # Service Courses
+    "operation research": {
+        "technical": ["Linear Algebra", "Algorithms", "Probability & Statistics"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "stochastic": {
+        "technical": ["Probability & Statistics", "Linear Algebra"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "game theory": {
+        "technical": ["Algorithms", "Probability & Statistics", "Linear Algebra"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "data mining": {
+        "technical": ["SQL", "Python", "Machine Learning", "Database Design"],
+        "human": ["Problem-solving", "Self-learner"]
+    },
+    "optimization": {
+        "technical": ["Linear Algebra", "Algorithms", "Calculus"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
+    "social networks": {
+        "technical": ["Algorithms", "Data Structures", "Probability & Statistics"],
+        "human": ["Problem-solving", "Critical Thinking"]
+    },
 }
 
-HUMAN_SKILL_KEYWORDS = {
-    "Teamwork": ["project", "team", "collaboration", "group", "software engineering", "se"],
-    "Communication": ["presentation", "communication", "verbal", "writing", "seminar"],
-    "Self-learner": ["theory", "research", "ml", "machine learning", "advanced", "deep"],
-    "Problem-solving": ["algorithm", "problem", "optimization", "solve"],
-    "Adaptability": ["change", "adapt", "flexible", "agile"],
-    "Leadership": ["project", "lead", "management", "engineering"],
-}
-
-# ============================================================================
-# SKILL MAPPING HEURISTICS
-# ============================================================================
 
 def categorize_course(course_name: str, course_description: str) -> tuple[list[str], list[str]]:
     """
-    Intelligently categorize a course and return recommended technical and human skills.
+    Intelligently categorize a course and return realistic domain-specific skills.
+    
+    Uses predefined mappings for common course types, then falls back to keyword detection.
     
     Args:
         course_name: Name of the course
@@ -57,77 +331,66 @@ def categorize_course(course_name: str, course_description: str) -> tuple[list[s
     """
     combined_text = (course_name + " " + (course_description or "")).lower()
     
+    # Check for predefined mappings
+    for keyword, skill_mapping in COURSE_SKILL_MAPPINGS.items():
+        if keyword in combined_text:
+            return skill_mapping["technical"], skill_mapping["human"]
+    
+    # Fallback: Basic keyword-based categorization
     technical_assigned = set()
     human_assigned = set()
     
-    # --- DETECT COURSE CATEGORY ---
-    is_web = any(keyword in combined_text for keyword in ["web", "ui", "interface", "frontend", "react", "javascript"])
-    is_backend = any(keyword in combined_text for keyword in ["server", "service", "api", "node"])
-    is_db = any(keyword in combined_text for keyword in ["database", "data", "sql", "mining", "big data"])
-    is_ml = any(keyword in combined_text for keyword in ["machine learning", "deep", "neural", "ai", "vision", "nlp"])
-    is_systems = any(keyword in combined_text for keyword in ["operating", "systems", "parallel", "compiler", "assembly", "os"])
-    is_security = any(keyword in combined_text for keyword in ["security", "cyber", "cryptography", "secure"])
-    is_project = any(keyword in combined_text for keyword in ["project", "software engineering", "seminar", "capstone"])
+    # Detect broader categories from the course
+    is_math = any(word in combined_text for word in ["calculus", "algebra", "geometry", "probability", "statistics", "math"])
+    is_theory = any(word in combined_text for word in ["theory", "model", "automata", "computation", "formal"])
+    is_systems = any(word in combined_text for word in ["system", "operating", "architecture", "parallel", "embedded"])
+    is_programming = any(word in combined_text for word in ["programming", "code", "language", "java", "python", "c++"])
+    is_project = any(word in combined_text for word in ["project", "capstone", "seminar", "workshop"])
     
-    # --- ALWAYS ADD GIT (version control is universal) ---
-    technical_assigned.add("Git")
+    # Mathematical courses
+    if is_math:
+        if "calculus" in combined_text:
+            technical_assigned.update(["Calculus", "Linear Algebra"])
+        elif "algebra" in combined_text:
+            technical_assigned.update(["Linear Algebra", "Discrete Mathematics"])
+        elif "probability" in combined_text or "statistics" in combined_text:
+            technical_assigned.update(["Probability & Statistics", "Linear Algebra"])
+        else:
+            technical_assigned.update(["Calculus", "Linear Algebra"])
+        human_assigned.update(["Problem-solving", "Critical Thinking"])
+        return list(technical_assigned), list(human_assigned)
     
-    # --- CATEGORY-SPECIFIC MAPPINGS ---
-    if is_web:
-        technical_assigned.update(["JavaScript", "React", "Node.js", "Docker"])
-        if is_db:
-            technical_assigned.add("SQL")
-    elif is_backend:
-        technical_assigned.update(["Node.js", "Docker", "SQL", "AWS"])
-    elif is_db:
-        technical_assigned.update(["SQL", "Python", "AWS", "Docker"])
-    elif is_ml:
-        technical_assigned.update(["Python", "TensorFlow", "Docker", "AWS"])
-        human_assigned.add("Self-learner")
-    elif is_systems:
-        technical_assigned.update(["C++", "Docker", "AWS"])
-        technical_assigned.discard("Git")  # Re-add ensures consistency
-        technical_assigned.add("Git")
-    elif is_security:
-        technical_assigned.update(["Docker", "AWS", "Python", "SQL"])
-    else:
-        # Default tech stack
-        technical_assigned.update(["Python", "SQL", "Docker"])
+    # Theory courses
+    if is_theory:
+        technical_assigned.update(["Computational Theory", "Algorithms", "Discrete Mathematics"])
+        human_assigned.update(["Problem-solving", "Critical Thinking"])
+        return list(technical_assigned), list(human_assigned)
     
-    # Ensure we have 4-6 technical skills
-    if len(technical_assigned) < 4:
-        # Add common skills to reach minimum
-        technical_assigned.update(["Python", "Git", "Docker"])
+    # Systems courses
+    if is_systems:
+        technical_assigned.update(["Operating Systems", "Computer Architecture", "C++"])
+        if "parallel" in combined_text:
+            technical_assigned.add("Parallel Programming")
+        human_assigned.update(["Problem-solving", "Critical Thinking"])
+        return list(technical_assigned), list(human_assigned)
     
-    # Trim to 4-6 (prefer to keep important ones)
-    if len(technical_assigned) > 6:
-        # Keep Git, Docker, and most relevant ones
-        keep = ["Git", "Docker", "Python", "SQL"]
-        to_keep = [s for s in keep if s in technical_assigned]
-        # Add most specific ones
-        others = [s for s in technical_assigned if s not in to_keep]
-        technical_assigned = set(to_keep + others[:6-len(to_keep)])
+    # Programming courses
+    if is_programming:
+        technical_assigned.update(["Python", "Data Structures", "Algorithms", "Software Design"])
+        human_assigned.update(["Problem-solving", "Teamwork"])
+        return list(technical_assigned), list(human_assigned)
     
-    # --- HUMAN SKILLS ---
-    human_assigned.add("Problem-solving")  # Universal for technical courses
-    
-    if is_project or "seminar" in combined_text or "capstone" in combined_text:
-        human_assigned.update(["Teamwork", "Communication"])
-    
-    if is_ml or "research" in combined_text:
-        human_assigned.add("Self-learner")
-    
+    # Project-based courses
     if is_project:
-        human_assigned.add("Leadership")
+        technical_assigned.update(["Software Design", "Data Structures", "Algorithms"])
+        human_assigned.update(["Teamwork", "Communication", "Problem-solving"])
+        if "seminar" in combined_text or "research" in combined_text:
+            human_assigned.add("Self-learner")
+        return list(technical_assigned), list(human_assigned)
     
-    # Ensure 2-3 human skills
-    if len(human_assigned) < 2:
-        human_assigned.add("Self-learner")
-    if len(human_assigned) > 3:
-        # Trim to 3, keeping Problem-solving
-        keep = ["Problem-solving"]
-        others = [s for s in human_assigned if s != "Problem-solving"]
-        human_assigned = set(keep + others[:3-len(keep)])
+    # Default for courses we don't recognize
+    technical_assigned.update(["Python", "Data Structures", "Algorithms"])
+    human_assigned.update(["Problem-solving", "Teamwork"])
     
     return list(technical_assigned), list(human_assigned)
 
@@ -192,7 +455,7 @@ def backfill_course_skills():
                         new_link = models.CourseSkill(
                             course_id=course.id,
                             skill_id=skill_id,
-                            relevance_score=None  # Could be computed later
+                            relevance_score=1.0  # Default relevance for all links
                         )
                         db.add(new_link)
                         links_added += 1

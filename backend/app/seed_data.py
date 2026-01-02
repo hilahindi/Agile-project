@@ -6,8 +6,139 @@ This ensures a clean schema is ready for production use.
 from .database import SessionLocal, engine
 from . import models
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 # auth_utils import is still needed for the student model dependency on startup
 from .auth_utils import get_password_hash 
+
+
+def backfill_career_goal_human_skills(db):
+    """
+    Map career goals to realistic required human skills.
+    This populates the career_goal_human_skills join table.
+    """
+    # Define realistic human skill mappings for each career goal
+    career_goal_skill_mappings = {
+        "Backend Developer": ["Problem-solving", "Teamwork", "Self-learner"],
+        "Frontend Developer": ["Creativity", "Problem-solving", "Communication"],
+        "Full Stack Developer": ["Problem-solving", "Teamwork", "Self-learner"],
+        "Mobile Developer": ["Creativity", "Teamwork", "Problem-solving"],
+        "Data Scientist": ["Critical Thinking", "Problem-solving", "Self-learner"],
+        "Data Analyst": ["Problem-solving", "Critical Thinking", "Self-learner"],
+        "Machine Learning Engineer": ["Self-learner", "Problem-solving", "Critical Thinking"],
+        "DevOps Engineer": ["Problem-solving", "Teamwork", "Self-learner"],
+        "Cloud Architect": ["Problem-solving", "Leadership", "Self-learner"],
+        "UX Designer": ["Creativity", "Communication", "Teamwork"],
+        "QA Engineer": ["Problem-solving", "Critical Thinking", "Teamwork"],
+        "Security Engineer": ["Problem-solving", "Critical Thinking", "Self-learner"],
+        "Product Manager": ["Communication", "Leadership", "Problem-solving"],
+        "Embedded Systems Engineer": ["Problem-solving", "Self-learner", "Critical Thinking"],
+    }
+    
+    # Build skill lookup by name
+    all_skills = db.query(models.Skill).filter(models.Skill.type == 'human').all()
+    skill_map = {skill.name: skill.id for skill in all_skills}
+    
+    total_links = 0
+    
+    for goal_name, skill_names in career_goal_skill_mappings.items():
+        # Find the career goal
+        goal = db.query(models.CareerGoal).filter(models.CareerGoal.name == goal_name).first()
+        if not goal:
+            print(f"  ⚠️  Career goal '{goal_name}' not found in database")
+            continue
+        
+        # Assign human skills to this goal
+        for skill_name in skill_names:
+            if skill_name not in skill_map:
+                print(f"  ⚠️  Human skill '{skill_name}' not found for goal '{goal_name}'")
+                continue
+            
+            skill_id = skill_map[skill_name]
+            
+            # Check if this link already exists
+            existing = db.query(models.CareerGoalHumanSkill).filter(
+                models.CareerGoalHumanSkill.career_goal_id == goal.id,
+                models.CareerGoalHumanSkill.skill_id == skill_id
+            ).first()
+            
+            if not existing:
+                try:
+                    new_link = models.CareerGoalHumanSkill(
+                        career_goal_id=goal.id,
+                        skill_id=skill_id
+                    )
+                    db.add(new_link)
+                    total_links += 1
+                except IntegrityError:
+                    db.rollback()
+    
+    db.commit()
+    print(f"Career goal human skills backfill completed: {total_links} links added.")
+
+
+def backfill_career_goal_technical_skills(db):
+    """
+    Map career goals to realistic required technical skills.
+    This populates the career_goal_technical_skills join table.
+    """
+    # Define realistic technical skill mappings for each career goal
+    career_goal_skill_mappings = {
+        "Backend Developer": ["Node.js", "Python", "SQL", "Docker", "AWS"],
+        "Frontend Developer": ["React", "JavaScript", "HTML/CSS", "Software Design", "Git"],
+        "Full Stack Developer": ["React", "Node.js", "Python", "SQL", "Docker"],
+        "Mobile Developer": ["Swift", "React", "HTML/CSS", "Software Design", "Git"],
+        "Data Scientist": ["Python", "Machine Learning", "Linear Algebra", "Probability & Statistics", "SQL"],
+        "Data Analyst": ["SQL", "Python", "Probability & Statistics", "Database Design", "Git"],
+        "Machine Learning Engineer": ["Python", "TensorFlow", "PyTorch", "Machine Learning", "Linear Algebra"],
+        "DevOps Engineer": ["Docker", "AWS", "Git", "CI/CD", "Operating Systems"],
+        "Cloud Architect": ["AWS", "Docker", "CI/CD", "Operating Systems", "Network Programming"],
+        "UX Designer": ["React", "HTML/CSS", "Computer Graphics", "JavaScript", "Software Design"],
+        "QA Engineer": ["Testing & QA", "Python", "Git", "Software Design", "Algorithms"],
+        "Security Engineer": ["Cryptography", "Network Security", "Secure Coding", "Operating Systems", "Python"],
+        "Product Manager": ["Software Design", "Agile Development", "Git", "Database Design", "Algorithms"],
+        "Embedded Systems Engineer": ["C++", "Embedded Systems", "Operating Systems", "Computer Architecture", "Python"],
+    }
+    
+    # Build skill lookup by name
+    all_skills = db.query(models.Skill).filter(models.Skill.type == 'technical').all()
+    skill_map = {skill.name: skill.id for skill in all_skills}
+    
+    total_links = 0
+    
+    for goal_name, skill_names in career_goal_skill_mappings.items():
+        # Find the career goal
+        goal = db.query(models.CareerGoal).filter(models.CareerGoal.name == goal_name).first()
+        if not goal:
+            print(f"  ⚠️  Career goal '{goal_name}' not found in database")
+            continue
+        
+        # Assign technical skills to this goal
+        for skill_name in skill_names:
+            if skill_name not in skill_map:
+                print(f"  ⚠️  Technical skill '{skill_name}' not found for goal '{goal_name}'")
+                continue
+            
+            skill_id = skill_map[skill_name]
+            
+            # Check if this link already exists
+            existing = db.query(models.CareerGoalTechnicalSkill).filter(
+                models.CareerGoalTechnicalSkill.career_goal_id == goal.id,
+                models.CareerGoalTechnicalSkill.skill_id == skill_id
+            ).first()
+            
+            if not existing:
+                try:
+                    new_link = models.CareerGoalTechnicalSkill(
+                        career_goal_id=goal.id,
+                        skill_id=skill_id
+                    )
+                    db.add(new_link)
+                    total_links += 1
+                except IntegrityError:
+                    db.rollback()
+    
+    db.commit()
+    print(f"Career goal technical skills backfill completed: {total_links} links added.")
 
 
 def seed_database():
@@ -16,24 +147,26 @@ def seed_database():
     
     # --- CRITICAL: Drop all existing tables to apply the new schema ---
     try:
-        # Drop all tables with CASCADE to handle dependencies and ensure the new schema is used
-        db.execute(text("DROP TABLE IF EXISTS student_courses CASCADE"))
-        db.execute(text("DROP TABLE IF EXISTS student_human_skills CASCADE"))
-        db.execute(text("DROP TABLE IF EXISTS course_clusters CASCADE"))
-        db.execute(text("DROP TABLE IF EXISTS course_skills CASCADE"))
-        db.execute(text("DROP TABLE IF EXISTS clusters CASCADE"))
-        db.execute(text("DROP TABLE IF EXISTS course_reviews CASCADE"))
-        db.execute(text("DROP TABLE IF EXISTS course_prerequisites CASCADE"))
-        db.execute(text("DROP TABLE IF EXISTS ratings CASCADE"))
-        db.execute(text("DROP TABLE IF EXISTS students CASCADE")) 
-        db.execute(text("DROP TABLE IF EXISTS courses CASCADE"))
-        db.execute(text("DROP TABLE IF EXISTS skills CASCADE"))
-        db.execute(text("DROP TABLE IF EXISTS career_goals CASCADE"))
+        # Drop all tables in public schema using PostgreSQL dynamic SQL
+        drop_all_sql = """
+        DO $$
+        DECLARE
+            r RECORD;
+        BEGIN
+            FOR r IN (
+                SELECT tablename
+                FROM pg_tables
+                WHERE schemaname = 'public'
+            ) LOOP
+                EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+            END LOOP;
+        END $$;
+        """
+        db.execute(text(drop_all_sql))
         db.commit()
-        print("Existing tables dropped successfully.")
+        print("✅ All existing tables dropped successfully.")
     except Exception as e:
         db.rollback()
-        # This will still print a warning if a table didn't exist, but it's safe.
         print(f"Warning during DROP (may occur if tables didn't exist): {e}") 
     
     # Create all tables (Now includes 'hashed_password' on the students table)
@@ -360,16 +493,67 @@ def seed_database():
     
     # --- ADD SKILLS (Technical and Human) ---
     technical_skills = [
+        # Programming Languages
         models.Skill(name="Python", type="technical", description="Python programming language"),
         models.Skill(name="JavaScript", type="technical", description="JavaScript programming language"),
-        models.Skill(name="SQL", type="technical", description="Relational database language"),
+        models.Skill(name="C++", type="technical", description="C++ programming language"),
+        models.Skill(name="C#", type="technical", description="C# programming language"),
+        models.Skill(name="Java", type="technical", description="Java programming language"),
+        models.Skill(name="Swift", type="technical", description="Swift for iOS development"),
+        
+        # Web Technologies
         models.Skill(name="React", type="technical", description="React.js for frontend development"),
         models.Skill(name="Node.js", type="technical", description="Node.js for backend development"),
-        models.Skill(name="TensorFlow", type="technical", description="ML framework"),
-        models.Skill(name="C++", type="technical", description="C++ programming language"),
-        models.Skill(name="AWS", type="technical", description="Amazon Web Services"),
+        models.Skill(name="HTML/CSS", type="technical", description="Web markup and styling"),
+        
+        # Databases
+        models.Skill(name="SQL", type="technical", description="Relational database language"),
+        models.Skill(name="Database Design", type="technical", description="Designing and optimizing databases"),
+        
+        # ML & AI
+        models.Skill(name="Machine Learning", type="technical", description="ML algorithms and frameworks"),
+        models.Skill(name="TensorFlow", type="technical", description="TensorFlow ML framework"),
+        models.Skill(name="PyTorch", type="technical", description="PyTorch deep learning framework"),
+        
+        # DevOps & Cloud
         models.Skill(name="Docker", type="technical", description="Containerization"),
+        models.Skill(name="AWS", type="technical", description="Amazon Web Services"),
         models.Skill(name="Git", type="technical", description="Version control"),
+        models.Skill(name="CI/CD", type="technical", description="Continuous integration and deployment"),
+        
+        # Mathematics & Theory
+        models.Skill(name="Calculus", type="technical", description="Single and multi-variable calculus"),
+        models.Skill(name="Linear Algebra", type="technical", description="Matrices and vector spaces"),
+        models.Skill(name="Discrete Mathematics", type="technical", description="Set theory, logic, and combinatorics"),
+        models.Skill(name="Probability & Statistics", type="technical", description="Probability theory and statistical inference"),
+        models.Skill(name="Mathematical Logic", type="technical", description="Propositional and predicate logic"),
+        
+        # Computer Science Theory
+        models.Skill(name="Algorithms", type="technical", description="Algorithm design and analysis"),
+        models.Skill(name="Data Structures", type="technical", description="Lists, trees, graphs, hash tables"),
+        models.Skill(name="Computational Theory", type="technical", description="Automata, formal languages, complexity"),
+        models.Skill(name="Compiler Design", type="technical", description="Parsing, syntax analysis, code generation"),
+        
+        # Systems & Architecture
+        models.Skill(name="Computer Architecture", type="technical", description="CPU, memory, assembly language"),
+        models.Skill(name="Operating Systems", type="technical", description="Process management, file systems"),
+        models.Skill(name="Parallel Programming", type="technical", description="Multi-threading and parallelization"),
+        models.Skill(name="Network Programming", type="technical", description="TCP/IP, sockets, protocols"),
+        models.Skill(name="Embedded Systems", type="technical", description="Low-level hardware programming"),
+        
+        # Security
+        models.Skill(name="Cryptography", type="technical", description="Encryption and security algorithms"),
+        models.Skill(name="Network Security", type="technical", description="Securing communication channels"),
+        models.Skill(name="Secure Coding", type="technical", description="Writing secure, exploit-free code"),
+        
+        # Graphics & Vision
+        models.Skill(name="Computer Graphics", type="technical", description="2D/3D rendering and visualization"),
+        models.Skill(name="Computer Vision", type="technical", description="Image processing and detection"),
+        
+        # Software Engineering
+        models.Skill(name="Software Design", type="technical", description="Design patterns and architecture"),
+        models.Skill(name="Testing & QA", type="technical", description="Unit testing and quality assurance"),
+        models.Skill(name="Agile Development", type="technical", description="Agile methodologies and practices"),
     ]
     human_skills = [
         models.Skill(name="Teamwork", type="human", description="Works well in teams"),
@@ -378,10 +562,12 @@ def seed_database():
         models.Skill(name="Problem-solving", type="human", description="Strong at solving new problems"),
         models.Skill(name="Adaptability", type="human", description="Quick to adjust to change"),
         models.Skill(name="Leadership", type="human", description="Can lead projects or teams"),
+        models.Skill(name="Critical Thinking", type="human", description="Analyzes problems analytically"),
+        models.Skill(name="Creativity", type="human", description="Thinks outside the box"),
     ]
     db.add_all(technical_skills + human_skills)
     db.commit()
-    print("Skills added successfully (10 technical, 6 human).")
+    print(f"Skills added successfully ({len(technical_skills)} technical, {len(human_skills)} human).")
 
     # --- ADD CAREER GOALS ---
     undecided = models.CareerGoal(name="Undecided", description="Student hasn't decided on a career path yet.")
@@ -421,29 +607,66 @@ def seed_database():
     db.commit()
     print("Demo student created successfully (username: demo, password: demo123).")
     
-    # --- ADD STUDENT COURSES (for courses the demo student has taken) ---
+    # --- ADD DATA SCIENTIST DEMO STUDENT ---
+    # Create a data scientist demo student with relevant completed courses
+    datascientist_goal = db.query(models.CareerGoal).filter(models.CareerGoal.name == "Data Scientist").first()
+    
+    datascientist_student = models.Student(
+        name="demo2",
+        hashed_password=get_password_hash("demo123"),
+        faculty="Computer Science",
+        year=3,
+        career_goal_id=datascientist_goal.id if datascientist_goal else None
+    )
+    db.add(datascientist_student)
+    db.commit()
+    print("Data Scientist demo student created successfully (username: demo2, password: demo123).")
+    
+    # --- ADD STUDENT COURSES (for demo student) ---
     # These will be set to "completed" status
     demo_courses = [
         models.StudentCourse(student_id=demo_student.id, course_id=10016, status="completed"),  # Intro to CS
         models.StudentCourse(student_id=demo_student.id, course_id=10117, status="completed"),  # Data Structures
         models.StudentCourse(student_id=demo_student.id, course_id=10208, status="completed"),  # UI Development
     ]
-    db.add_all(demo_courses)
+    
+    # Courses for data scientist demo student
+    datascientist_courses = [
+        models.StudentCourse(student_id=datascientist_student.id, course_id=10117, status="completed"),  # Data Structures
+        models.StudentCourse(student_id=datascientist_student.id, course_id=10015, status="completed"),  # Statistics
+        models.StudentCourse(student_id=datascientist_student.id, course_id=10016, status="completed"),  # Intro to CS
+    ]
+    
+    db.add_all(demo_courses + datascientist_courses)
     db.commit()
     print("Demo student courses added successfully.")
     
-    # --- ADD STUDENT HUMAN SKILLS (for demo student) ---
-    # Assign some human skills to the demo student
-    # Get human skills (skills with type='human')
+    # --- ADD STUDENT HUMAN SKILLS ---
+    # Assign human skills to demo student
     human_skills = db.query(models.Skill).filter(models.Skill.type == 'human').all()
-    
     if human_skills:
-        # Assign the first 3 human skills to the demo student
         for skill in human_skills[:3]:
             demo_student.human_skills.append(skill)
         db.commit()
         assigned_skills = [s.name for s in human_skills[:3]]
         print(f"Demo student human skills added: {assigned_skills}")
+    
+    # Assign specific human skills to data scientist demo student
+    problem_solving = db.query(models.Skill).filter(
+        models.Skill.name == "Problem-solving",
+        models.Skill.type == 'human'
+    ).first()
+    self_learner = db.query(models.Skill).filter(
+        models.Skill.name == "Self-learner",
+        models.Skill.type == 'human'
+    ).first()
+    
+    if problem_solving:
+        datascientist_student.human_skills.append(problem_solving)
+    if self_learner:
+        datascientist_student.human_skills.append(self_learner)
+    db.commit()
+    print("Data Scientist demo student human skills added: Problem-solving, Self-learner")
     
     # --- ADD SAMPLE COURSE REVIEWS ---
     sample_reviews = [
@@ -486,11 +709,57 @@ def seed_database():
             useful_learning_rating=4,
             final_score=8.8
         ),
+        # Data Scientist Demo Student Course Reviews
+        models.CourseReview(
+            student_id=datascientist_student.id,
+            course_id=10016,  # Intro to Computer Science
+            languages_learned="Python, SQL",
+            course_outputs="Data analysis scripts, Small Python projects",
+            industry_relevance_text="Essential foundation for data science",
+            instructor_feedback="Clear explanations and practical examples",
+            useful_learning_text="Good fundamentals for data work",
+            industry_relevance_rating=5,
+            instructor_rating=5,
+            useful_learning_rating=5,
+            final_score=9.5
+        ),
+        models.CourseReview(
+            student_id=datascientist_student.id,
+            course_id=10117,  # Data Structures
+            languages_learned="Python, SQL, Docker, Git, AWS",
+            course_outputs="Algorithm implementations, Data structure projects, Deployed models",
+            industry_relevance_text="Critical for handling large datasets in production",
+            instructor_feedback="Excellent depth of knowledge, industry-relevant assignments",
+            useful_learning_text="Essential for building scalable data pipelines",
+            industry_relevance_rating=5,
+            instructor_rating=5,
+            useful_learning_rating=5,
+            final_score=9.8
+        ),
+        models.CourseReview(
+            student_id=datascientist_student.id,
+            course_id=10015,  # Statistics
+            languages_learned="Python, SQL, Docker, Git",
+            course_outputs="Statistical analysis projects, Hypothesis testing reports",
+            industry_relevance_text="Fundamental for data-driven decision making",
+            instructor_feedback="Rigorous curriculum, excellent practical applications",
+            useful_learning_text="Highly relevant for data science work",
+            industry_relevance_rating=5,
+            instructor_rating=4,
+            useful_learning_rating=5,
+            final_score=9.2
+        ),
     ]
     
     db.add_all(sample_reviews)
     db.commit()
     print("Sample course reviews added successfully.")
+    
+    # --- BACKFILL CAREER GOAL HUMAN SKILLS ---
+    backfill_career_goal_human_skills(db)
+    
+    # --- BACKFILL CAREER GOAL TECHNICAL SKILLS ---
+    backfill_career_goal_technical_skills(db)
     
     # Backfill course skills using intelligent keyword matching
     from .backfill_course_skills import backfill_course_skills
