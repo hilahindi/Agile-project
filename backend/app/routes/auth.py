@@ -11,8 +11,8 @@ router = APIRouter(
     tags=["Authentication"],
 )
 
-# Configuration for token expiration (e.g., 30 minutes)
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# Configuration for token expiration (e.g., 1440 minutes = 24 hour)
+ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 
 
 @router.post("/register", response_model=schemas.StudentResponse)
