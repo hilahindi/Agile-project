@@ -47,7 +47,18 @@ services:
       - ./backend:/app
       # CRITICAL: Mount the React build directory for FastAPI to serve
       - ./frontend/build:/app/app/frontend_build
-      
+  seed_data:
+    build: ./backend
+    command: python -m app.seed_data
+    environment:
+      DB_USER: admin
+      DB_PASSWORD: admin
+      DB_NAME: courses_db
+      DB_HOST: db
+      DB_PORT: 5432
+    depends_on:
+      - db
+    restart: "no"
 
 volumes:
   pgdata:
