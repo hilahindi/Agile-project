@@ -44,13 +44,13 @@ def backfill_career_goal_human_skills(db):
         # Find the career goal
         goal = db.query(models.CareerGoal).filter(models.CareerGoal.name == goal_name).first()
         if not goal:
-            print(f"  ⚠️  Career goal '{goal_name}' not found in database")
+            print(f"Career goal '{goal_name}' not found in database")
             continue
         
         # Assign human skills to this goal
         for skill_name in skill_names:
             if skill_name not in skill_map:
-                print(f"  ⚠️  Human skill '{skill_name}' not found for goal '{goal_name}'")
+                print(f"Human skill '{skill_name}' not found for goal '{goal_name}'")
                 continue
             
             skill_id = skill_map[skill_name]
@@ -109,13 +109,13 @@ def backfill_career_goal_technical_skills(db):
         # Find the career goal
         goal = db.query(models.CareerGoal).filter(models.CareerGoal.name == goal_name).first()
         if not goal:
-            print(f"  ⚠️  Career goal '{goal_name}' not found in database")
+            print(f"Career goal '{goal_name}' not found in database")
             continue
         
         # Assign technical skills to this goal
         for skill_name in skill_names:
             if skill_name not in skill_map:
-                print(f"  ⚠️  Technical skill '{skill_name}' not found for goal '{goal_name}'")
+                print(f"Technical skill '{skill_name}' not found for goal '{goal_name}'")
                 continue
             
             skill_id = skill_map[skill_name]
@@ -635,6 +635,9 @@ def seed_database():
         models.StudentCourse(student_id=datascientist_student.id, course_id=10117, status="completed"),  # Data Structures
         models.StudentCourse(student_id=datascientist_student.id, course_id=10015, status="completed"),  # Statistics
         models.StudentCourse(student_id=datascientist_student.id, course_id=10016, status="completed"),  # Intro to CS
+        models.StudentCourse(student_id=datascientist_student.id, course_id=90901, status="completed"),  # calculus 1 
+        models.StudentCourse(student_id=datascientist_student.id, course_id=90905, status="completed"),  # algebra 1
+        models.StudentCourse(student_id=datascientist_student.id, course_id=10245, status="completed"),  # machine learning 
     ]
     
     db.add_all(demo_courses + datascientist_courses)
