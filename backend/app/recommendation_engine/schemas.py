@@ -38,7 +38,7 @@ class CourseExplain(BaseModel):
     avg_score_raw: Optional[float]  # raw 1..10
     review_count: int
     matched_technical_skills: List[SkillMatch] = []
-    missing_technical_skills: List[int] = []
+    missing_technical_skills: List[SkillMatch] = []
     affinity_explanation: Optional[AffinityExplanation] = None
 
 
