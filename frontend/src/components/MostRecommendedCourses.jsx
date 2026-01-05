@@ -198,7 +198,6 @@ const MostRecommendedCourses = () => {
                 <TableCell>#</TableCell>
                 <TableCell>Course Name</TableCell>
                 <TableCell align="right">Final Score</TableCell>
-                <TableCell align="right">Avg Review (Count)</TableCell>
                 <TableCell align="right">Career Fit</TableCell>
                 <TableCell align="right">Affinity</TableCell>
                 <TableCell align="right">Quality</TableCell>
@@ -222,15 +221,6 @@ const MostRecommendedCourses = () => {
                       <Typography sx={{ fontWeight: 600 }}>
                         {(rec.final_score * 10).toFixed(2)}
                       </Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      {rec.avg_score_raw !== null ? (
-                        <Typography>
-                          {rec.avg_score_raw.toFixed(1)} ({rec.review_count})
-                        </Typography>
-                      ) : (
-                        <Typography color="textSecondary">- ({rec.review_count})</Typography>
-                      )}
                     </TableCell>
                     <TableCell align="right">
                       {rec.breakdown?.s_role?.toFixed(2) || '0.00'}
@@ -289,10 +279,10 @@ const MostRecommendedCourses = () => {
                                 Missing Technical Skills
                               </Typography>
                               <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
-                                {rec.missing_technical_skills.map((skillId) => (
+                                {rec.missing_technical_skills.map((skill) => (
                                   <Chip
-                                    key={skillId}
-                                    label={`Skill #${skillId}`}
+                                    key={skill.skill_id}
+                                    label={skill.name}
                                     size="small"
                                     color="error"
                                     variant="outlined"

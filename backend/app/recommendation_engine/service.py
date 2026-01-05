@@ -249,7 +249,11 @@ def recommend_courses(
                     'relevance_score': relevance,
                 })
             else:
-                missing_technical.append(sid)
+                missing_technical.append({
+                    'skill_id': sid,
+                    'name': skill_map.get(sid, ''),
+                    'relevance_score': 0.0,
+                })
 
         # Raw average score
         avg_score_raw = stats['avg'] if stats and stats.get('avg') is not None else None

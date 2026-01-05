@@ -29,6 +29,21 @@ CLUSTERS_DATA = [
         "name": "User Interfaces",
         "description": "Courses focused on UI/UX design, web development, and user interface development",
         "course_ids": [10147, 10313, 10208, 10234, 10220, 10225, 10219, 10266]
+    },
+    {
+        "name": "Game Development",
+        "description": "Courses focused on game development, graphics programming, and game engines",
+        "course_ids": [10128, 10220, 10267, 10342, 10207, 10147]
+    },
+    {
+        "name": "Data Analysis",
+        "description": "Courses focused on data analysis, data science, and business analytics",
+        "course_ids": [90911, 10015, 10127, 10206, 10351, 10358]
+    },
+    {
+        "name": "Software Development",
+        "description": "Courses focused on software engineering, development practices, and coding skills",
+        "course_ids": [10010, 11015, 10356, 10110, 10142, 10149, 10212, 10216]
     }
 ]
 
