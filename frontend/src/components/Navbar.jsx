@@ -62,11 +62,11 @@ const Navbar = ({ currentPage, onNavigate, onLogout }) => {
       <Toolbar
         sx={{
           display: 'flex',
-          justifyContent: 'space-between',
           alignItems: 'center',
+          justifyContent: 'center',
           px: { xs: 2, sm: 4 },
           py: 1.5,
-          gap: 2,
+          position: 'relative',
         }}
       >
         {/* Left: Logo/App Name and Submit Review Button */}
@@ -76,6 +76,8 @@ const Navbar = ({ currentPage, onNavigate, onLogout }) => {
             alignItems: 'center',
             gap: 2,
             minWidth: 'fit-content',
+            position: 'absolute',
+            left: { xs: 8, sm: 32 },
           }}
         >
           {/* Logo */}
@@ -166,6 +168,8 @@ const Navbar = ({ currentPage, onNavigate, onLogout }) => {
             cursor: 'pointer',
             transition: 'all 0.2s ease',
             minWidth: 'fit-content',
+            position: 'absolute',
+            right: { xs: 8, sm: 32 },
             '&:hover': {
               backgroundColor: '#f5f5f5',
             },
