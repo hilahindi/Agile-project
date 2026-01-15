@@ -140,9 +140,8 @@ const CourseSearchAutocomplete = () => {
   return (
     <Box
       sx={{
-        flex: 1,
         maxWidth: { xs: '100%', sm: 420, md: 520 },
-        mx: 'auto',
+        width: '100%',
         px: { xs: 1, sm: 2 },
       }}
     >
