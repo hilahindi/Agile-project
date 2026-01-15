@@ -597,7 +597,7 @@ def seed_database():
     undecided_goal = db.query(models.CareerGoal).filter(models.CareerGoal.name == "Undecided").first()
     
     demo_student = models.Student(
-        name="demo",
+        name="Hila",
         hashed_password=get_password_hash("demo123"),
         faculty="Computer Science",
         year=3,
@@ -605,14 +605,14 @@ def seed_database():
     )
     db.add(demo_student)
     db.commit()
-    print("Demo student created successfully (username: demo, password: demo123).")
+    print("Demo student created successfully (username: Hila, password: demo123).")
     
     # --- ADD DATA SCIENTIST DEMO STUDENT ---
     # Create a data scientist demo student with relevant completed courses
     datascientist_goal = db.query(models.CareerGoal).filter(models.CareerGoal.name == "Data Scientist").first()
     
     datascientist_student = models.Student(
-        name="demo2",
+        name="Gal",
         hashed_password=get_password_hash("demo123"),
         faculty="Computer Science",
         year=3,
@@ -620,7 +620,70 @@ def seed_database():
     )
     db.add(datascientist_student)
     db.commit()
-    print("Data Scientist demo student created successfully (username: demo2, password: demo123).")
+    print("Data Scientist demo student created successfully (username: Gal, password: demo123).")
+    
+    # --- ADD 5 NEW STUDENTS ---
+    new_students = [
+        models.Student(
+            name="Noga",
+            hashed_password=get_password_hash("pass123"),
+            faculty="Computer Science",
+            year=2,
+            career_goal_id=undecided_goal.id if undecided_goal else None
+        ),
+        models.Student(
+            name="Neta",
+            hashed_password=get_password_hash("pass123"),
+            faculty="Computer Science",
+            year=3,
+            career_goal_id=backend.id if backend else None
+        ),
+        models.Student(
+            name="Dor",
+            hashed_password=get_password_hash("pass123"),
+            faculty="Computer Science",
+            year=4,
+            career_goal_id=frontend.id if frontend else None
+        ),
+        models.Student(
+            name="Ran",
+            hashed_password=get_password_hash("pass123"),
+            faculty="Computer Science",
+            year=2,
+            career_goal_id=datascientist.id if datascientist else None
+        ),
+        models.Student(
+            name="Yuval",
+            hashed_password=get_password_hash("pass123"),
+            faculty="Computer Science",
+            year=3,
+            career_goal_id=fullstack.id if fullstack else None
+        ),
+        models.Student(
+            name="Tal",
+            hashed_password=get_password_hash("pass123"),
+            faculty="Computer Science",
+            year=1,
+            career_goal_id=mlengineer.id if mlengineer else None
+        ),
+        models.Student(
+            name="Yonit",
+            hashed_password=get_password_hash("pass123"),
+            faculty="Computer Science",
+            year=4,
+            career_goal_id=devops.id if devops else None
+        ),
+        models.Student(
+            name="Shlomi",
+            hashed_password=get_password_hash("pass123"),
+            faculty="Computer Science",
+            year=2,
+            career_goal_id=uxdesigner.id if uxdesigner else None
+        ),
+    ]
+    db.add_all(new_students)
+    db.commit()
+    print("8 new students created successfully (usernames: Noga, Neta, Dor, Ran, Yuval, Tal, Yonit, Shlomi; password: pass123).")
     
     # --- ADD STUDENT COURSES (for demo student) ---
     # These will be set to "completed" status
@@ -757,6 +820,170 @@ def seed_database():
     db.add_all(sample_reviews)
     db.commit()
     print("Sample course reviews added successfully.")
+    
+    # --- ADD 3-4 REVIEWS FOR EACH COURSE BY DIFFERENT USERS ---
+    import random
+    
+    # Get all courses
+    all_courses = db.query(models.Course).all()
+    course_ids = [course.id for course in all_courses]
+    
+    # Student IDs: 1 (demo), 2 (demo2), 3 (alice), 4 (bob), 5 (charlie), 6 (diana), 7 (eve)
+    student_ids = [1, 2, 3, 4, 5, 6, 7]
+    
+    # Review templates for variety
+    review_templates = [
+        {
+            "languages_learned": "Python, JavaScript",
+            "course_outputs": "Personal projects, Small applications",
+            "industry_relevance_text": "Highly relevant for modern development",
+            "instructor_feedback": "Excellent teaching and clear explanations",
+            "useful_learning_text": "Very useful concepts learned",
+            "industry_relevance_rating": 5,
+            "instructor_rating": 5,
+            "useful_learning_rating": 5,
+            "final_score": 9.8
+        },
+        {
+            "languages_learned": "Java, C++",
+            "course_outputs": "Algorithm implementations, System projects",
+            "industry_relevance_text": "Essential for backend engineering roles",
+            "instructor_feedback": "Good depth but could be more practical",
+            "useful_learning_text": "Solid foundation for advanced topics",
+            "industry_relevance_rating": 4,
+            "instructor_rating": 4,
+            "useful_learning_rating": 4,
+            "final_score": 8.5
+        },
+        {
+            "languages_learned": "SQL, Database Design",
+            "course_outputs": "Database schemas, Query optimizations",
+            "industry_relevance_text": "Critical for data management positions",
+            "instructor_feedback": "Clear and methodical approach",
+            "useful_learning_text": "Practical skills for real-world applications",
+            "industry_relevance_rating": 5,
+            "instructor_rating": 4,
+            "useful_learning_rating": 5,
+            "final_score": 9.2
+        },
+        {
+            "languages_learned": "React, HTML/CSS",
+            "course_outputs": "Web applications, UI components",
+            "industry_relevance_text": "Very relevant for frontend development",
+            "instructor_feedback": "Great practical examples",
+            "useful_learning_text": "Excellent for building modern interfaces",
+            "industry_relevance_rating": 5,
+            "instructor_rating": 5,
+            "useful_learning_rating": 5,
+            "final_score": 9.5
+        },
+        {
+            "languages_learned": "Machine Learning frameworks",
+            "course_outputs": "ML models, Data analysis projects",
+            "industry_relevance_text": "Highly sought after in tech industry",
+            "instructor_feedback": "Challenging but rewarding",
+            "useful_learning_text": "Advanced concepts well explained",
+            "industry_relevance_rating": 5,
+            "instructor_rating": 4,
+            "useful_learning_rating": 5,
+            "final_score": 9.0
+        },
+        {
+            "languages_learned": "Assembly, System programming",
+            "course_outputs": "Low-level programs, Hardware interactions",
+            "industry_relevance_text": "Important for systems engineering",
+            "instructor_feedback": "Technical and detailed",
+            "useful_learning_text": "Deep understanding of computer systems",
+            "industry_relevance_rating": 4,
+            "instructor_rating": 4,
+            "useful_learning_rating": 4,
+            "final_score": 8.7
+        },
+        {
+            "languages_learned": "Various programming languages",
+            "course_outputs": "Multiple projects, Code portfolios",
+            "industry_relevance_text": "Broad foundation for CS careers",
+            "instructor_feedback": "Comprehensive coverage",
+            "useful_learning_text": "Well-rounded computer science education",
+            "industry_relevance_rating": 5,
+            "instructor_rating": 5,
+            "useful_learning_rating": 5,
+            "final_score": 9.3
+        },
+        # Low-rated reviews for variety
+        {
+            "languages_learned": "Basic concepts",
+            "course_outputs": "Simple assignments",
+            "industry_relevance_text": "Outdated content, not very relevant",
+            "instructor_feedback": "Poor teaching, hard to follow",
+            "useful_learning_text": "Limited practical value",
+            "industry_relevance_rating": 2,
+            "instructor_rating": 2,
+            "useful_learning_rating": 2,
+            "final_score": 5.5
+        },
+        {
+            "languages_learned": "Some theory",
+            "course_outputs": "Basic exercises",
+            "industry_relevance_text": "Not very applicable to current industry",
+            "instructor_feedback": "Lectures were confusing and disorganized",
+            "useful_learning_text": "Struggled to see the practical applications",
+            "industry_relevance_rating": 3,
+            "instructor_rating": 2,
+            "useful_learning_rating": 3,
+            "final_score": 6.8
+        },
+        {
+            "languages_learned": "Limited exposure",
+            "course_outputs": "Few completed projects",
+            "industry_relevance_text": "Content feels disconnected from real work",
+            "instructor_feedback": "Instructor seemed unprepared",
+            "useful_learning_text": "Could have been more engaging",
+            "industry_relevance_rating": 3,
+            "instructor_rating": 3,
+            "useful_learning_rating": 3,
+            "final_score": 7.2
+        },
+        {
+            "languages_learned": "Outdated tools",
+            "course_outputs": "Basic implementations",
+            "industry_relevance_text": "Material is quite dated",
+            "instructor_feedback": "Good effort but content needs updating",
+            "useful_learning_text": "Some useful concepts but overall disappointing",
+            "industry_relevance_rating": 2,
+            "instructor_rating": 4,
+            "useful_learning_rating": 2,
+            "final_score": 6.1
+        }
+    ]
+    
+    additional_reviews = []
+    for course_id in course_ids:
+        # Select 3 random students for this course
+        selected_students = random.sample(student_ids, 3)
+        
+        for i, student_id in enumerate(selected_students):
+            # Choose a random template
+            template = random.choice(review_templates)
+            
+            review = models.CourseReview(
+                student_id=student_id,
+                course_id=course_id,
+                languages_learned=template["languages_learned"],
+                course_outputs=template["course_outputs"],
+                industry_relevance_text=template["industry_relevance_text"],
+                instructor_feedback=template["instructor_feedback"],
+                useful_learning_text=template["useful_learning_text"],
+                industry_relevance_rating=template["industry_relevance_rating"],
+                instructor_rating=template["instructor_rating"],
+                useful_learning_rating=template["useful_learning_rating"],
+                final_score=template["final_score"]
+            )
+            additional_reviews.append(review)
+    
+    db.add_all(additional_reviews)
+    db.commit()
+    print(f"Additional course reviews added successfully ({len(additional_reviews)} reviews for {len(course_ids)} courses).")
     
     # --- BACKFILL CAREER GOAL HUMAN SKILLS ---
     backfill_career_goal_human_skills(db)
