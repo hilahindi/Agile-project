@@ -112,6 +112,15 @@ class CourseResponse(CourseBase):
         from_attributes = True
 
 
+class CourseSearchOut(BaseModel):
+    """Schema for course search results (autocomplete)."""
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
 # ==================== ENROLLMENT SCHEMAS ====================
 class EnrollmentBase(BaseModel):
     """Base schema for Enrollment."""

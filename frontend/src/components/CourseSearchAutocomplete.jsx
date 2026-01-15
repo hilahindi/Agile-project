@@ -1,53 +1,35 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Autocomplete,
   TextField,
   CircularProgress,
   Box,
   Typography,
-  styled,
+  InputAdornment,
 } from '@mui/material';
-
-const SearchField = styled(TextField)({
-  width: '100%',
-  minWidth: '300px',
-  maxWidth: '300px',
-  '& .MuiOutlinedInput-root': {
-    backgroundColor: 'white',
-    borderRadius: '6px',
-    '&:hover fieldset': {
-      borderColor: '#00D9A3',
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#00D9A3',
-    },
-  },
-  '& .MuiInputBase-input::placeholder': {
-    color: '#999',
-    opacity: 1,
-  },
-});
+import SearchIcon from '@mui/icons-material/Search';
+import { searchCourses } from '../services/courseService';
 
 /**
  * CourseSearchAutocomplete Component
  * 
  * Features:
- * - Search courses by ID (numeric prefix) or name
+ * - Search courses by ID or name (minimum 2 characters)
  * - Debounce to reduce API calls (300ms)
- * - Client-side caching with Map (keyed by query)
- * - AbortController for cancelling in-flight requests
- * - Loading and error states
- * - Navigate to course detail page on selection
+ * - AbortController for cancelling in-flight requests (race condition prevention)
+ * - Loading state with spinner
+ * - Auto-navigate to course on selection
+ * - Centered responsive width (max 560px)
  */
-const CourseSearchAutocomplete = ({ onNavigate }) => {
+const CourseSearchAutocomplete = () => {
+  const navigate = useNavigate();
   const [inputValue, setInputValue] = useState('');
   const [value, setValue] = useState(null);
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   
-  // Cache and debounce management
-  const cacheRef = useRef(new Map());
+  // Debounce and race condition management
   const debounceTimerRef = useRef(null);
   const abortControllerRef = useRef(null);
 
@@ -55,53 +37,30 @@ const CourseSearchAutocomplete = ({ onNavigate }) => {
    * Fetch courses from backend search endpoint
    */
   const fetchCourses = useCallback(async (query) => {
-    if (!query || query.trim().length === 0) {
-      setOptions([]);
-      setError('');
-      return;
+    // Cancel previous request if any
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
 
-    // Check cache first
-    const cacheKey = query.toLowerCase();
-    if (cacheRef.current.has(cacheKey)) {
-      setOptions(cacheRef.current.get(cacheKey));
-      setError('');
+    // If query is too short, clear options and return
+    if (!query || query.trim().length < 2) {
+      setOptions([]);
+      setLoading(false);
       return;
     }
 
     try {
-      // Cancel previous request if any
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-
       abortControllerRef.current = new AbortController();
       setLoading(true);
-      setError('');
 
-      const response = await fetch(
-        `http://localhost:8000/api/courses/search?q=${encodeURIComponent(query)}&limit=10`,
-        { signal: abortControllerRef.current.signal }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Search failed: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await searchCourses(query, 10);
       
-      // Cache the results
-      cacheRef.current.set(cacheKey, data);
-      setOptions(data);
-      
-      if (data.length === 0) {
-        setError('No courses found');
-      } else {
-        setError('');
+      // Only apply results if request wasn't aborted (prevents race conditions)
+      if (!abortControllerRef.current.signal.aborted) {
+        setOptions(data);
       }
     } catch (err) {
       if (err.name !== 'AbortError') {
-        setError('Failed to search courses');
         console.error('Search error:', err);
         setOptions([]);
       }
@@ -122,17 +81,16 @@ const CourseSearchAutocomplete = ({ onNavigate }) => {
         clearTimeout(debounceTimerRef.current);
       }
 
-      // Only search on input change (not on blur or other reasons)
+      // Only search on input change
       if (reason === 'input') {
-        if (newInputValue && newInputValue.trim().length > 0) {
+        if (newInputValue && newInputValue.trim().length >= 2) {
           // Set new debounce timer (300ms)
           debounceTimerRef.current = setTimeout(() => {
             fetchCourses(newInputValue);
           }, 300);
         } else {
-          // Clear options if input is empty
+          // Clear options if input is too short
           setOptions([]);
-          setError('');
         }
       }
     },
@@ -144,20 +102,20 @@ const CourseSearchAutocomplete = ({ onNavigate }) => {
    */
   const handleChange = useCallback(
     (event, selectedOption) => {
-      if (selectedOption && onNavigate) {
+      if (selectedOption) {
         setValue(selectedOption);
+        // Navigate to course detail page
+        navigate(`/courses/${selectedOption.id}`);
+        // Clear input
         setInputValue('');
-        
-        // Navigate to course detail page via onNavigate callback
-        onNavigate(`/courses/${selectedOption.id}`);
-      } else {
+        setOptions([]);
         setValue(null);
       }
     },
-    [onNavigate]
+    [navigate]
   );
 
-  // Cleanup abort controller on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (debounceTimerRef.current) {
@@ -169,8 +127,25 @@ const CourseSearchAutocomplete = ({ onNavigate }) => {
     };
   }, []);
 
+  /**
+   * Determine no options text based on input length and results
+   */
+  const noOptionsText = () => {
+    if (!inputValue || inputValue.trim().length < 2) {
+      return 'Type at least 2 characters';
+    }
+    return 'No courses found';
+  };
+
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box
+      sx={{
+        flex: 1,
+        maxWidth: { xs: '100%', sm: 420, md: 520 },
+        mx: 'auto',
+        px: { xs: 1, sm: 2 },
+      }}
+    >
       <Autocomplete
         freeSolo
         options={options}
@@ -178,57 +153,87 @@ const CourseSearchAutocomplete = ({ onNavigate }) => {
         inputValue={inputValue}
         onChange={handleChange}
         onInputChange={handleInputChange}
-        loading={loading}
+        loading={loading && inputValue.trim().length >= 2}
         getOptionLabel={(option) =>
           typeof option === 'string'
             ? option
             : `${option.id} - ${option.name}`
         }
+        filterOptions={(x) => x} // Disable client-side filtering; backend is source of truth
+        isOptionEqualToValue={(option, val) =>
+          option && val && option.id === val.id
+        }
+        noOptionsText={noOptionsText()}
         renderOption={(props, option) => (
-          <li {...props}>
-            <Box>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {option.id} - {option.name}
-              </Typography>
-            </Box>
+          <li {...props} key={option.id}>
+            <Typography variant="body2">
+              {`${option.id} - ${option.name}`}
+            </Typography>
           </li>
         )}
-        noOptionsText={
-          error ? error : loading ? 'Searching...' : 'Start typing to search'
-        }
         renderInput={(params) => (
-          <SearchField
+          <TextField
             {...params}
-            placeholder="Search courses by ID or name..."
+            placeholder="Search course…"
             variant="outlined"
             size="small"
+            fullWidth
             InputProps={{
               ...params.InputProps,
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon
+                    sx={{
+                      color: '#999',
+                      fontSize: '20px',
+                      ml: 0.5,
+                    }}
+                  />
+                </InputAdornment>
+              ),
               endAdornment: (
                 <>
-                  {loading && <CircularProgress color="inherit" size={20} />}
+                  {loading && inputValue.trim().length >= 2 ? (
+                    <CircularProgress color="inherit" size={20} />
+                  ) : null}
                   {params.InputProps.endAdornment}
                 </>
               ),
             }}
+            sx={{
+              backgroundColor: '#f5f5f5',
+              borderRadius: '8px',
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: '#f5f5f5',
+                '&:hover': {
+                  backgroundColor: '#efefef',
+                },
+                '&.Mui-focused': {
+                  backgroundColor: '#ffffff',
+                  '& fieldset': {
+                    borderColor: '#00D9A3',
+                  },
+                },
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#e0e0e0',
+              },
+              '& input::placeholder': {
+                color: '#999',
+                opacity: 1,
+              },
+            }}
           />
         )}
-        slotProps={{
-          popper: {
-            modifiers: [
-              {
-                name: 'flip',
-                enabled: true,
-              },
-            ],
+        ListboxProps={{
+          style: {
+            maxHeight: '300px',
           },
         }}
-        isOptionEqualToValue={(option, val) =>
-          option && val && option.id === val.id
-        }
       />
     </Box>
   );
 };
 
 export default CourseSearchAutocomplete;
+

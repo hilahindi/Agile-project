@@ -281,3 +281,181 @@ class TestDeleteCourse:
         
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+
+@pytest.mark.api
+class TestSearchCourses:
+    """Test GET /courses/search endpoint."""
+    
+    def test_search_empty_query(self, client, test_course):
+        """Test search with empty query returns empty list."""
+        response = client.get("/courses/search?q=")
+        
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json() == []
+    
+    def test_search_query_too_short(self, client, test_course):
+        """Test search with query < 2 chars returns empty list."""
+        response = client.get("/courses/search?q=a")
+        
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json() == []
+    
+    def test_search_minimum_length(self, client, db_session):
+        """Test search with exactly 2 characters."""
+        from app import models
+        
+        course = models.Course(name="Python Programming", description="Learn Python")
+        db_session.add(course)
+        db_session.commit()
+        
+        response = client.get("/courses/search?q=py")
+        
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert len(data) >= 1
+        assert any(c["name"] == "Python Programming" for c in data)
+    
+    def test_search_by_partial_name(self, client, db_session):
+        """Test searching by partial course name."""
+        from app import models
+        
+        course = models.Course(name="Introduction to Computer Science", description="CS Basics")
+        db_session.add(course)
+        db_session.commit()
+        
+        response = client.get("/courses/search?q=introduction")
+        
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert len(data) >= 1
+        assert data[0]["id"] == course.id
+        assert data[0]["name"] == "Introduction to Computer Science"
+    
+    def test_search_by_course_id(self, client, db_session):
+        """Test searching by course ID (as string)."""
+        from app import models
+        
+        course = models.Course(name="Data Structures", description="DS Course")
+        db_session.add(course)
+        db_session.commit()
+        
+        # Search by ID
+        response = client.get(f"/courses/search?q={course.id}")
+        
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert len(data) >= 1
+        assert data[0]["id"] == course.id
+    
+    def test_search_limit_default_10(self, client, db_session):
+        """Test search respects default limit of 10."""
+        from app import models
+        
+        # Create 15 courses with matching name
+        for i in range(15):
+            course = models.Course(name=f"Test Course {i}", description="Matching")
+            db_session.add(course)
+        db_session.commit()
+        
+        response = client.get("/courses/search?q=test")
+        
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert len(data) == 10  # Default limit
+    
+    def test_search_limit_capped_to_10(self, client, db_session):
+        """Test search limit is capped at 10 even if client asks for more."""
+        from app import models
+        
+        # Create 15 courses with matching name
+        for i in range(15):
+            course = models.Course(name=f"Query Course {i}", description="Matching")
+            db_session.add(course)
+        db_session.commit()
+        
+        response = client.get("/courses/search?q=query&limit=20")
+        
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert len(data) == 10  # Capped at 10
+    
+    def test_search_ranking_exact_id_first(self, client, db_session):
+        """Test ranking: exact ID match comes first."""
+        from app import models
+        
+        # Create courses where one has an ID that matches the name of another
+        course1 = models.Course(id=100, name="Programming", description="Desc1")
+        course2 = models.Course(id=101, name="Course 100", description="Desc2")
+        db_session.add(course1)
+        db_session.add(course2)
+        db_session.commit()
+        
+        # Search for "100" - should match both, but exact ID (100) comes first
+        response = client.get("/courses/search?q=100")
+        
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert len(data) >= 1
+        # The exact ID match should be first
+        assert data[0]["id"] == 100
+    
+    def test_search_ranking_id_prefix_before_name_contains(self, client, db_session):
+        """Test ranking: ID prefix match ranks higher than name contains."""
+        from app import models
+        
+        course1 = models.Course(id=1000, name="Something Else", description="Desc1")
+        course2 = models.Course(id=200, name="1000 Ways to Learn", description="Desc2")
+        db_session.add(course1)
+        db_session.add(course2)
+        db_session.commit()
+        
+        # Search for "100" - should match both
+        response = client.get("/courses/search?q=100")
+        
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert len(data) >= 1
+        # ID prefix match (1000) should come before name contains (1000 Ways)
+        assert data[0]["id"] == 1000
+    
+    def test_search_case_insensitive(self, client, db_session):
+        """Test search is case-insensitive."""
+        from app import models
+        
+        course = models.Course(name="Web Development", description="Dev Course")
+        db_session.add(course)
+        db_session.commit()
+        
+        # Try different cases
+        for query in ["web", "WEB", "Web", "wEB"]:
+            response = client.get(f"/courses/search?q={query}")
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+            assert len(data) >= 1
+            assert any(c["id"] == course.id for c in data)
+    
+    def test_search_response_format(self, client, db_session):
+        """Test search response contains only id and name fields."""
+        from app import models
+        
+        course = models.Course(
+            name="Full Stack Development",
+            description="Complex description with lots of details",
+            workload=15,
+            credits=3.0,
+            status="Mandatory"
+        )
+        db_session.add(course)
+        db_session.commit()
+        
+        response = client.get("/courses/search?q=full")
+        
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert len(data) >= 1
+        result = data[0]
+        
+        # Should only have id and name
+        assert set(result.keys()) == {"id", "name"}
+        assert result["id"] == course.id
+        assert result["name"] == "Full Stack Development"

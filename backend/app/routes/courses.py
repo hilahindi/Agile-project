@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, case, cast, String
 from .. import models, schemas
 from ..database import get_db
 
@@ -12,6 +12,67 @@ def get_all_courses(skip: int = 0, limit: int = 100, db: Session = Depends(get_d
     """Get all courses with pagination."""
     courses = db.query(models.Course).offset(skip).limit(limit).all()
     return courses
+
+
+@router.get("/search", response_model=list[schemas.CourseSearchOut])
+def search_courses(
+    q: str = Query("", min_length=0),
+    limit: int = Query(10, ge=1, le=10),
+    db: Session = Depends(get_db)
+):
+    """
+    Search courses by ID or name.
+    
+    Rules:
+    - If q is empty or < 2 characters, return empty list
+    - limit is capped to 10
+    - Search matches:
+      1) ID as text: courses.id::text ILIKE %q%
+      2) Name: courses.name ILIKE %q%
+    - Ranking (order of preference):
+      1) Exact ID match (id::text = q)
+      2) ID prefix match (id::text ILIKE q || '%')
+      3) Name prefix match (name ILIKE q || '%')
+      4) Other contains matches
+    - Stable sort by name ASC, then id ASC
+    """
+    # If query is too short, return empty
+    if not q or len(q.strip()) < 2:
+        return []
+    
+    q = q.strip()
+    
+    # Build ranking logic using CASE expression
+    # Higher rank value = better match
+    ranking = case(
+        # Exact ID match
+        (cast(models.Course.id, String) == q, 4),
+        # ID prefix match
+        (cast(models.Course.id, String).ilike(q + "%"), 3),
+        # Name prefix match
+        (models.Course.name.ilike(q + "%"), 2),
+        # Name contains (partial)
+        (models.Course.name.ilike("%" + q + "%"), 1),
+        # ID contains (partial)
+        (cast(models.Course.id, String).ilike("%" + q + "%"), 0),
+        else_=-1
+    )
+    
+    # Query courses with ranking
+    courses = db.query(
+        models.Course,
+        ranking.label("rank")
+    ).filter(
+        (cast(models.Course.id, String).ilike("%" + q + "%")) |
+        (models.Course.name.ilike("%" + q + "%"))
+    ).order_by(
+        ranking.desc(),
+        models.Course.name.asc(),
+        models.Course.id.asc()
+    ).limit(limit).all()
+    
+    # Return only the Course models (strip the rank)
+    return [course for course, _ in courses]
 
 
 @router.get("/{course_id}", response_model=schemas.CourseDetailsResponse)
