@@ -103,3 +103,28 @@ export const locateReviewPage = async (courseId, reviewId, token) => {
 
   return response.json();
 };
+
+/**
+ * Search courses by ID or name (for autocomplete)
+ * @param {string} query - Search query (2+ characters)
+ * @param {number} limit - Max results (default 10, capped at 10)
+ * @returns {Promise<Array>} Array of {id, name} objects
+ */
+export const searchCourses = async (query, limit = 10) => {
+  const encodedQuery = encodeURIComponent(query);
+  const response = await fetch(
+    `${API_URL}/courses/search?q=${encodedQuery}&limit=${limit}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to search courses: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+};

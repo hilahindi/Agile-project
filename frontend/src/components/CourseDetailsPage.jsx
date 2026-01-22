@@ -253,7 +253,7 @@ const CourseDetailsPage = () => {
             '&:hover': { backgroundColor: 'rgba(0, 217, 163, 0.1)' },
           }}
         >
-          Back to Reviews
+          Back 
         </Button>
 
         {/* Header Card */}

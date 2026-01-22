@@ -14,6 +14,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { useAuth } from '../services/authService';
+import CourseSearchAutocomplete from './CourseSearchAutocomplete';
 
 const Navbar = ({ currentPage, onNavigate, onLogout }) => {
   const navigate = useNavigate();
@@ -61,67 +62,69 @@ const Navbar = ({ currentPage, onNavigate, onLogout }) => {
       <Toolbar
         sx={{
           display: 'flex',
-          justifyContent: 'space-between',
           alignItems: 'center',
+          justifyContent: 'center',
           px: { xs: 2, sm: 4 },
           py: 1.5,
+          position: 'relative',
         }}
       >
-        {/* Left: Logo/App Name - Clickable */}
+        {/* Left: Logo/App Name and Submit Review Button */}
         <Box
-          onClick={() => navigate('/dashboard')}
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 0.5,
-            cursor: 'pointer',
+            gap: 2,
             minWidth: 'fit-content',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              opacity: 0.8,
-            },
+            position: 'absolute',
+            left: { xs: 8, sm: 32 },
           }}
         >
+          {/* Logo */}
           <Box
+            onClick={() => navigate('/dashboard')}
             sx={{
-              width: 32,
-              height: 32,
-              borderRadius: '8px',
-              background: 'linear-gradient(135deg, #00D9A3 0%, #00A880 100%)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontWeight: 'bold',
-              fontSize: '18px',
+              gap: 0.5,
+              cursor: 'pointer',
+              minWidth: 'fit-content',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                opacity: 0.8,
+              },
             }}
           >
-            A
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                background: 'linear-gradient(135deg, #00D9A3 0%, #00A880 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: '18px',
+              }}
+            >
+              A
+            </Box>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 700,
+                fontSize: '20px',
+                letterSpacing: '-0.5px',
+                display: { xs: 'none', sm: 'block' },
+              }}
+            >
+              Afeka Advisor
+            </Typography>
           </Box>
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 700,
-              fontSize: '20px',
-              letterSpacing: '-0.5px',
-              display: { xs: 'none', sm: 'block' },
-            }}
-          >
-            Afeka Advisor
-          </Typography>
-        </Box>
 
-        {/* Center: Navigation Links */}
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 1,
-            alignItems: 'center',
-            flex: 1,
-            ml: 4,
-          }}
-        >
-          {/* Submit Review */}
+          {/* Submit Review Button */}
           <Button
             onClick={() => navigate('/submit-review')}
             variant={currentPage === 'review' ? 'outlined' : 'text'}
@@ -146,88 +149,86 @@ const Navbar = ({ currentPage, onNavigate, onLogout }) => {
           </Button>
         </Box>
 
+        {/* Center: Search Bar */}
+        <CourseSearchAutocomplete />
+
         {/* Right: User Menu */}
         <Box
+          onClick={handleMenuOpen}
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          aria-controls="user-menu"
           sx={{
             display: 'flex',
             alignItems: 'center',
-            ml: 'auto',
+            gap: isMobile ? 0.5 : 1,
+            px: 1.5,
+            py: 1,
+            borderRadius: '8px',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            minWidth: 'fit-content',
+            position: 'absolute',
+            right: { xs: 8, sm: 32 },
+            '&:hover': {
+              backgroundColor: '#f5f5f5',
+            },
+            '&:focus-within': {
+              outline: '2px solid #00D9A3',
+              outlineOffset: '2px',
+            },
           }}
         >
-          <Box
-            onClick={handleMenuOpen}
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            aria-controls="user-menu"
+          <Avatar
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: isMobile ? 0.5 : 1,
-              px: 1.5,
-              py: 1,
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                backgroundColor: '#f5f5f5',
-              },
-              '&:focus-within': {
-                outline: '2px solid #00D9A3',
-                outlineOffset: '2px',
-              },
+              width: 36,
+              height: 36,
+              backgroundColor: '#00D9A3',
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: 600,
             }}
           >
-            <Avatar
-              sx={{
-                width: 36,
-                height: 36,
-                backgroundColor: '#00D9A3',
-                color: 'white',
-                fontSize: '16px',
-                fontWeight: 600,
-              }}
-            >
-              {initial}
-            </Avatar>
+            {initial}
+          </Avatar>
 
-            {!isMobile && (
-              <>
-                <Typography
-                  sx={{
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    color: '#333',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '120px',
-                  }}
-                >
-                  {firstName}
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: '16px',
-                    color: '#999',
-                    ml: 0.5,
-                  }}
-                >
-                  ▼
-                </Typography>
-              </>
-            )}
-
-            {isMobile && (
+          {!isMobile && (
+            <>
+              <Typography
+                sx={{
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#333',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '120px',
+                }}
+              >
+                {firstName}
+              </Typography>
               <Typography
                 sx={{
                   fontSize: '16px',
                   color: '#999',
+                  ml: 0.5,
                 }}
               >
                 ▼
               </Typography>
-            )}
-          </Box>
+            </>
+          )}
+
+          {isMobile && (
+            <Typography
+              sx={{
+                fontSize: '16px',
+                color: '#999',
+              }}
+            >
+              ▼
+            </Typography>
+          )}
         </Box>
       </Toolbar>
 
