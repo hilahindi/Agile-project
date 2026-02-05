@@ -245,7 +245,10 @@ Example feature branches:
 
 ## 🤝 Contributors
 - Gal Grinfeld  
-- (Add other team members)
+- Hila Hindi
+- Neta Elbaz
+- Noga Dotan
+- Dor Dotan
 
 ---
 
